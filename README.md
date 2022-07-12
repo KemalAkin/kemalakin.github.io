@@ -1,31 +1,132 @@
-A Github Pages template for academic websites. This was forked (then detached) by [Stuart Geiger](https://github.com/staeiou) from the [Minimal Mistakes Jekyll Theme](https://mmistakes.github.io/minimal-mistakes/), which is © 2016 Michael Rose and released under the MIT License. See LICENSE.md.
+<p align="center">
+  <h3 align="center">Hi, I'm Kemal </h3>
+</p>
 
-I think I've got things running smoothly and fixed some major bugs, but feel free to file issues or make pull requests if you want to improve the generic template / theme.
+<p align="center">
+  <img alt= "Hey!" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/dpool.gif?raw=true"  width="480" title="Hey!" />
+</p>
 
-### Note: if you are using this repo and now get a notification about a security vulnerability, delete the Gemfile.lock file. 
+I am a theoretical and computational physicist working on the origin and evolution of the universe. As a habit, I seek analytical and numerical solutions to any problem I come across in life!
 
-# Instructions
+$$
+R_{\mu \nu} - \dfrac{1}{2}R g_{\mu \nu} = \dfrac{8 \pi G}{c^4} T_{\mu \nu}
+$$
+  
 
-1. Register a GitHub account if you don't have one and confirm your e-mail (required!)
-1. Fork [this repository](https://github.com/academicpages/academicpages.github.io) by clicking the "fork" button in the top right. 
-1. Go to the repository's settings (rightmost item in the tabs that start with "Code", should be below "Unwatch"). Rename the repository "[your GitHub username].github.io", which will also be your website's URL.
-1. Set site-wide configuration and create content & metadata (see below -- also see [this set of diffs](http://archive.is/3TPas) showing what files were changed to set up [an example site](https://getorg-testacct.github.io) for a user with the username "getorg-testacct")
-1. Upload any files (like PDFs, .zip files, etc.) to the files/ directory. They will appear at https://[your GitHub username].github.io/files/example.pdf.  
-1. Check status by going to the repository settings, in the "GitHub pages" section
-1. (Optional) Use the Jupyter notebooks or python scripts in the `markdown_generator` folder to generate markdown files for publications and talks from a TSV file.
+Check out [details](#details) to learn more about me!
 
-See more info at https://academicpages.github.io/
+[![Github Follow](https://img.shields.io/github/followers/KemalAkin?color=red&label=GitHub&logo=github)](https://github.com/KemalAkin)
+[![Twitter Follow](https://img.shields.io/twitter/follow/KemalAkin?color=red&logo=twitter&logoColor=ffffff&style=flat&label=Twitter)](https://twitter.com/KemalAkin)
+[![YouTube](https://img.shields.io/youtube/channel/subscribers/UC1B6zPMQR_MwxY90AOr_f_w?color=red&label=YouTube&logo=youtube&style=flat-square)](https://www.youtube.com/channel/UC1B6zPMQR_MwxY90AOr_f_w)
 
-## To run locally (not on GitHub Pages, to serve on your own computer)
+<!--
 
-1. Clone the repository and made updates as detailed above
-1. Make sure you have ruby-dev, bundler, and nodejs installed: `sudo apt install ruby-dev ruby-bundler nodejs`
-1. Run `bundle clean` to clean up the directory (no need to run `--force`)
-1. Run `bundle install` to install ruby dependencies. If you get errors, delete Gemfile.lock and try again.
-1. Run `bundle exec jekyll liveserve` to generate the HTML and serve it from `localhost:4000` the local server will automatically rebuild and refresh the pages on change.
+- 🔭 I’m currently working on ...
 
-# Changelog -- bugfixes and enhancements
+-->
 
-There is one logistical issue with a ready-to-fork template theme like academic pages that makes it a little tricky to get bug fixes and updates to the core theme. If you fork this repository, customize it, then pull again, you'll probably get merge conflicts. If you want to save your various .yml configuration files and markdown files, you can delete the repository and fork it again. Or you can manually patch. 
+  
 
-To support this, all changes to the underlying code appear as a closed issue with the tag 'code change' -- get the list [here](https://github.com/academicpages/academicpages.github.io/issues?q=is%3Aclosed%20is%3Aissue%20label%3A%22code%20change%22%20). Each issue thread includes a comment linking to the single commit or a diff across multiple commits, so those with forked repositories can easily identify what they need to patch.
+## Details
+
+  
+<details>
+<summary>📫 <b> Contact </b> </summary>
+
+ - [All Links](https://linktr.ee/KemalAkin)
+ - [Twitter](https://twitter.com/KemalAkin)
+ - [LinkedIn](https://www.linkedin.com/in/kemal-akin-960b80a3/)
+ - [ResearchGate](https://www.researchgate.net/profile/Kemal-Akin)
+ - [YouTube](https://www.youtube.com/channel/UC1B6zPMQR_MwxY90AOr_f_w)
+</details>
+ 
+<details>
+    <summary>🤓<b> Selected Projects</b> </summary>
+
+
+<details>
+<summary> <b> Friedmann Universe Models </b> </summary>
+
+Einstein Field Equations are analytically evaluated for FRW metric and differential equations to describe evolution of the universe obtained. Relevant DEs are solved using numerical methods (NumPy and SciPy). Solutions are visualized using Matplotlib and Seaborn. Python scripts and animated solutions are publicly available [here](https://www.youtube.com/watch?v=1ApCBAW2MzY&list=PL23uNIuuSqCI_-g88U4mi85wumfc8YRIy).
+</details>
+
+<details>
+<summary> <b> Dynamical System Analysis of Quintessence Models </b> </summary>
+
+An alternative to standard model of cosmology ($\Lambda \mathrm{-CDM}$) is developed through scalar field models of dark energy. Stability analysis of radiation-matter-quintescence models are performed using symbolic(SymPy and Mathematica) and numerical(NumPy and SciPy) methods. Trajectories in the phase space are visualized using matplotlib.
+</details>
+
+<details>
+<summary> <b> Theoretical and Observational Aspects of Inflationary Cosmology </b> </summary>
+
+Strong theory of the early universe is investigated starting from first principles. Model independent observational constraints are analysed using Bayesian interface with CosmoMC. Various inflaton models within and beyond the general relativity are tested against PLANCK datasets.
+</details>
+
+<details>
+<summary> <b> Formalizing Slow-Roll Inflation in Scalar-Tensor Theories of Gravitation </b> </summary>
+
+The viability of slow-roll approximation is examined by considering the structure of phase spaces in scalar--tensor theories of gravitation and the analysis is exemplified with a non-minimally coupled
+scalar field to the spacetime curvature. Observational constraints are analysed using Bayesian interface with CosmoMC using PLANCK 2018 datasets. You can access the article from [here](https://www.sciencedirect.com/science/article/abs/pii/S2212686420303228).
+</details>
+<details>
+<summary> <b> Koronoloji </b> </summary>
+
+This personal project has started during COVID-19 outbreak. Case numbers are obtained by web scraping with Beautiful-Soap, local datasets are created, calculation of death/recovery rate, data fitting, visualization are performed with Python, native Excel functions and Adobe Illustrator. Daily numbers and charts are posted using automation scripts to social media through APIs. Currently, website is not active, however Instagram account is still available: [@koronoloji\_com](https://www.instagram.com/koronoloji_com)
+</details>
+
+<details>
+<summary> <b> Technical Analysis of Stock Markets </b> </summary>
+
+The project includes accessing the candlestick data through API, performing operations on data using Pandas and technical analysis libraries, plotting candlestick charts overlayed with indicators (RSI, MACD, Moving Averages) with Matplotlib, Seaborn and Plotly. The user also has access the relevant charts through Telegram Bot.
+
+</details>
+
+<details>
+<summary> <b> Automated Cryptocurrency Portfolio Manager </b> </summary>
+
+The project includes accessing the transaction history through broker(Binance/FTX) API, calculating profit/loss, average buy price, and the cost for each asset in the account. The user has access to portfolio through Telegram Bot by providing his/her API key.
+
+</details>
+
+<details>
+<summary> <b> Modelling Infectious Diseases </b> </summary>
+
+SIR(Susceptible, Infectious, Recovered) model is derived analytically and coupled differential equations are simultaneously solved using existing methods of SciPy and manual implementation of RK4. Stability of the disease is determined using symbolic methods from SymPy. Evolution of the disease within the society is visualized using Matplotlib. In the same manner, spread of HIV infection in the body is modelled and compared with publicly available data from an academic journal.
+
+</details>
+
+<details>
+<summary> <b> Classification of Forensic Evidence </b> </summary>
+
+Physical and chemical analyses of various forensic evidence from document forgery, ballistics and biological materials have been classified using Principal Component Analysis (PCA) from scikit-learn. A local database for each class of evidence has been created in order to match future evidence.  
+</details>
+</details>
+
+[linktree]: https://linktr.ee/KemalAkin
+[latex]: https://www.youtube.com/watch?v=7xDRiVObuF4&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=1
+
+## Programming Languages and Other Tools
+
+<img align="left" alt="Python" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/python.png?raw=true" title="Python"/>
+<img align="left" alt="Jupyter" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/jupyter.png?raw=true" title="Jupyter Notebook"/>
+<img align="left" alt="Matlab" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/matlab.png?raw=true" title="Matlab"/>
+<img align="left" alt="Mathematica" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/mathematica.png?raw=true" title="Mathematica"/>
+
+[<img align="left" alt="LaTeX" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/latex.png?raw=true" title="LaTeX"/>][latex]
+
+<img align="left" alt="Markdown" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/md.png?raw=true" title="MarkDown"/>
+<img align="left" alt="Terminal" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/terminal.png?raw=true" title="Terminal"/>
+<img align="left" alt="Git" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/git.png?raw=true" title="Git"/>
+<img align="left" alt="VS Code" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/vsCode.png?raw=true" title="VS Code"/>
+<img align="left" alt="Photoshop" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/ps.png?raw=true" title="Photoshop"/>
+<img align="left" alt="Illustrator" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/ai.png?raw=true" title="Illustrator"/>
+
+<br />
+
+## 📺 Talks on YouTube [TR]
+
+- [Inflation in Scalar-Tensor Theories of Gravitation](https://www.youtube.com/watch?v=qY57ptmequE&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=3)
+- [Cosmology: Fundamental Observations and Cosmic Dynamics](https://www.youtube.com/watch?v=jf2ufe3by9U&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=2)
+- [Document Preparation with LaTeX](https://www.youtube.com/watch?v=7xDRiVObuF4&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=1)
+- [Bibliography Management with Mendeley](https://www.youtube.com/watch?v=sk9UYmUwfB4&list=PLmq86vD98cHLb4zneGX-zH1E5cde1_eoa&index=5)
+
