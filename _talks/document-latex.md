@@ -4,7 +4,7 @@ collection: talks
 type: "Talk"
 permalink: /talks/document-latex
 venue: "12. Fizik Haftası"
-date: "2015"
+date: 2015-07-01
 location: "Bogazici University, Turkey"
 ---
 

@@ -4,7 +4,7 @@ collection: talks
 type: "Talk"
 permalink: /talks/introduction-cosmology
 venue: "14. Fizik Haftası"
-date: "2016"
+date: 2016-07-08
 location: "Istanbul Technical University, Turkey"
 ---
 

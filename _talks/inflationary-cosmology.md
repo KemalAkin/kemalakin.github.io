@@ -4,7 +4,7 @@ collection: talks
 type: "Talk"
 permalink: /talks/inflationary-cosmology
 venue: "18. Fizik Haftası"
-date: "2021"
+date: 2021-02-19
 location: "Istanbul Technical University, Turkey"
 ---
 
