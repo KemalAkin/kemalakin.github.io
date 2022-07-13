@@ -8,43 +8,136 @@ redirect_from:
   - /about.html
 ---
 
-This is the front page of a website that is powered by the [academicpages template](https://github.com/academicpages/academicpages.github.io) and hosted on GitHub pages. [GitHub pages](https://pages.github.com) is a free service in which websites are built and hosted from code and data stored in a GitHub repository, automatically updating when a new commit is made to the respository. This template was forked from the [Minimal Mistakes Jekyll Theme](https://mmistakes.github.io/minimal-mistakes/) created by Michael Rose, and then extended to support the kinds of content that academics have: publications, talks, teaching, a portfolio, blog posts, and a dynamically-generated CV. You can fork [this repository](https://github.com/academicpages/academicpages.github.io) right now, modify the configuration and markdown files, add your own PDFs and other content, and have your own site for free, with no ads! An older version of this template powers my own personal website at [stuartgeiger.com](http://stuartgeiger.com), which uses [this Github repository](https://github.com/staeiou/staeiou.github.io).
+<p align="center">
+  <h3 align="center">Hi, I'm Kemal </h3>
+</p>
 
-A data-driven personal website
-======
-Like many other Jekyll-based GitHub Pages templates, academicpages makes you separate the website's content from its form. The content & metadata of your website are in structured markdown files, while various other files constitute the theme, specifying how to transform that content & metadata into HTML pages. You keep these various markdown (.md), YAML (.yml), HTML, and CSS files in a public GitHub repository. Each time you commit and push an update to the repository, the [GitHub pages](https://pages.github.com/) service creates static HTML pages based on these files, which are hosted on GitHub's servers free of charge.
+<p align="center">
+  <img alt= "Hey!" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/dpool.gif?raw=true"  width="480" title="Hey!" />
+</p>
 
-Many of the features of dynamic content management systems (like Wordpress) can be achieved in this fashion, using a fraction of the computational resources and with far less vulnerability to hacking and DDoSing. You can also modify the theme to your heart's content without touching the content of your site. If you get to a point where you've broken something in Jekyll/HTML/CSS beyond repair, your markdown files describing your talks, publications, etc. are safe. You can rollback the changes or even delete the repository and start over -- just be sure to save the markdown files! Finally, you can also write scripts that process the structured data on the site, such as [this one](https://github.com/academicpages/academicpages.github.io/blob/master/talkmap.ipynb) that analyzes metadata in pages about talks to display [a map of every location you've given a talk](https://academicpages.github.io/talkmap.html).
+I am a theoretical and computational physicist working on the origin and evolution of the universe. As a habit, I seek analytical and numerical solutions to any problem I come across in life!
 
-Getting started
-======
-1. Register a GitHub account if you don't have one and confirm your e-mail (required!)
-1. Fork [this repository](https://github.com/academicpages/academicpages.github.io) by clicking the "fork" button in the top right. 
-1. Go to the repository's settings (rightmost item in the tabs that start with "Code", should be below "Unwatch"). Rename the repository "[your GitHub username].github.io", which will also be your website's URL.
-1. Set site-wide configuration and create content & metadata (see below -- also see [this set of diffs](http://archive.is/3TPas) showing what files were changed to set up [an example site](https://getorg-testacct.github.io) for a user with the username "getorg-testacct")
-1. Upload any files (like PDFs, .zip files, etc.) to the files/ directory. They will appear at https://[your GitHub username].github.io/files/example.pdf.  
-1. Check status by going to the repository settings, in the "GitHub pages" section
+$$
+R_{\mu \nu} - \dfrac{1}{2}R g_{\mu \nu} = \dfrac{8 \pi G}{c^4} T_{\mu \nu}
+$$
+  
 
-Site-wide configuration
-------
-The main configuration file for the site is in the base directory in [_config.yml](https://github.com/academicpages/academicpages.github.io/blob/master/_config.yml), which defines the content in the sidebars and other site-wide features. You will need to replace the default variables with ones about yourself and your site's github repository. The configuration file for the top menu is in [_data/navigation.yml](https://github.com/academicpages/academicpages.github.io/blob/master/_data/navigation.yml). For example, if you don't have a portfolio or blog posts, you can remove those items from that navigation.yml file to remove them from the header. 
+Check out [details](#details) to learn more about me!
 
-Create content & metadata
-------
-For site content, there is one markdown file for each type of content, which are stored in directories like _publications, _talks, _posts, _teaching, or _pages. For example, each talk is a markdown file in the [_talks directory](https://github.com/academicpages/academicpages.github.io/tree/master/_talks). At the top of each markdown file is structured data in YAML about the talk, which the theme will parse to do lots of cool stuff. The same structured data about a talk is used to generate the list of talks on the [Talks page](https://academicpages.github.io/talks), each [individual page](https://academicpages.github.io/talks/2012-03-01-talk-1) for specific talks, the talks section for the [CV page](https://academicpages.github.io/cv), and the [map of places you've given a talk](https://academicpages.github.io/talkmap.html) (if you run this [python file](https://github.com/academicpages/academicpages.github.io/blob/master/talkmap.py) or [Jupyter notebook](https://github.com/academicpages/academicpages.github.io/blob/master/talkmap.ipynb), which creates the HTML for the map based on the contents of the _talks directory).
+[![Github Follow](https://img.shields.io/github/followers/KemalAkin?color=red&label=GitHub&logo=github)](https://github.com/KemalAkin)
+[![Twitter Follow](https://img.shields.io/twitter/follow/KemalAkin?color=red&logo=twitter&logoColor=ffffff&style=flat&label=Twitter)](https://twitter.com/KemalAkin)
+[![YouTube](https://img.shields.io/youtube/channel/subscribers/UC1B6zPMQR_MwxY90AOr_f_w?color=red&label=YouTube&logo=youtube&style=flat-square)](https://www.youtube.com/channel/UC1B6zPMQR_MwxY90AOr_f_w)
 
-**Markdown generator**
+<!--
 
-I have also created [a set of Jupyter notebooks](https://github.com/academicpages/academicpages.github.io/tree/master/markdown_generator
-) that converts a CSV containing structured data about talks or presentations into individual markdown files that will be properly formatted for the academicpages template. The sample CSVs in that directory are the ones I used to create my own personal website at stuartgeiger.com. My usual workflow is that I keep a spreadsheet of my publications and talks, then run the code in these notebooks to generate the markdown files, then commit and push them to the GitHub repository.
+- 🔭 I’m currently working on ...
 
-How to edit your site's GitHub repository
-------
-Many people use a git client to create files on their local computer and then push them to GitHub's servers. If you are not familiar with git, you can directly edit these configuration and markdown files directly in the github.com interface. Navigate to a file (like [this one](https://github.com/academicpages/academicpages.github.io/blob/master/_talks/2012-03-01-talk-1.md) and click the pencil icon in the top right of the content preview (to the right of the "Raw | Blame | History" buttons). You can delete a file by clicking the trashcan icon to the right of the pencil icon. You can also create new files or upload files by navigating to a directory and clicking the "Create new file" or "Upload files" buttons. 
+-->
 
-Example: editing a markdown file for a talk
-![Editing a markdown file for a talk](/images/editing-talk.png)
+  
 
-For more info
-------
-More info about configuring academicpages can be found in [the guide](https://academicpages.github.io/markdown/). The [guides for the Minimal Mistakes theme](https://mmistakes.github.io/minimal-mistakes/docs/configuration/) (which this theme was forked from) might also be helpful.
+## Details
+
+  
+<details>
+<summary>📫 <b> Contact </b> </summary>
+
+ - [All Links](https://linktr.ee/KemalAkin)
+ - [Twitter](https://twitter.com/KemalAkin)
+ - [LinkedIn](https://www.linkedin.com/in/kemal-akin-960b80a3/)
+ - [ResearchGate](https://www.researchgate.net/profile/Kemal-Akin)
+ - [YouTube](https://www.youtube.com/channel/UC1B6zPMQR_MwxY90AOr_f_w)
+</details>
+ 
+<details>
+    <summary>🤓<b> Selected Projects</b> </summary>
+
+
+<details>
+<summary> <b> Friedmann Universe Models </b> </summary>
+
+Einstein Field Equations are analytically evaluated for FRW metric and differential equations to describe evolution of the universe obtained. Relevant DEs are solved using numerical methods (NumPy and SciPy). Solutions are visualized using Matplotlib and Seaborn. Python scripts and animated solutions are publicly available [here](https://www.youtube.com/watch?v=1ApCBAW2MzY&list=PL23uNIuuSqCI_-g88U4mi85wumfc8YRIy).
+</details>
+
+<details>
+<summary> <b> Dynamical System Analysis of Quintessence Models </b> </summary>
+
+An alternative to standard model of cosmology ($\Lambda \mathrm{-CDM}$) is developed through scalar field models of dark energy. Stability analysis of radiation-matter-quintescence models are performed using symbolic(SymPy and Mathematica) and numerical(NumPy and SciPy) methods. Trajectories in the phase space are visualized using matplotlib.
+</details>
+
+<details>
+<summary> <b> Theoretical and Observational Aspects of Inflationary Cosmology </b> </summary>
+
+Strong theory of the early universe is investigated starting from first principles. Model independent observational constraints are analysed using Bayesian interface with CosmoMC. Various inflaton models within and beyond the general relativity are tested against PLANCK datasets.
+</details>
+
+<details>
+<summary> <b> Formalizing Slow-Roll Inflation in Scalar-Tensor Theories of Gravitation </b> </summary>
+
+The viability of slow-roll approximation is examined by considering the structure of phase spaces in scalar--tensor theories of gravitation and the analysis is exemplified with a non-minimally coupled
+scalar field to the spacetime curvature. Observational constraints are analysed using Bayesian interface with CosmoMC using PLANCK 2018 datasets. You can access the article from [here](https://www.sciencedirect.com/science/article/abs/pii/S2212686420303228).
+</details>
+<details>
+<summary> <b> Koronoloji </b> </summary>
+
+This personal project has started during COVID-19 outbreak. Case numbers are obtained by web scraping with Beautiful-Soap, local datasets are created, calculation of death/recovery rate, data fitting, visualization are performed with Python, native Excel functions and Adobe Illustrator. Daily numbers and charts are posted using automation scripts to social media through APIs. Currently, website is not active, however Instagram account is still available: [@koronoloji\_com](https://www.instagram.com/koronoloji_com)
+</details>
+
+<details>
+<summary> <b> Technical Analysis of Stock Markets </b> </summary>
+
+The project includes accessing the candlestick data through API, performing operations on data using Pandas and technical analysis libraries, plotting candlestick charts overlayed with indicators (RSI, MACD, Moving Averages) with Matplotlib, Seaborn and Plotly. The user also has access the relevant charts through Telegram Bot.
+
+</details>
+
+<details>
+<summary> <b> Automated Cryptocurrency Portfolio Manager </b> </summary>
+
+The project includes accessing the transaction history through broker(Binance/FTX) API, calculating profit/loss, average buy price, and the cost for each asset in the account. The user has access to portfolio through Telegram Bot by providing his/her API key.
+
+</details>
+
+<details>
+<summary> <b> Modelling Infectious Diseases </b> </summary>
+
+SIR(Susceptible, Infectious, Recovered) model is derived analytically and coupled differential equations are simultaneously solved using existing methods of SciPy and manual implementation of RK4. Stability of the disease is determined using symbolic methods from SymPy. Evolution of the disease within the society is visualized using Matplotlib. In the same manner, spread of HIV infection in the body is modelled and compared with publicly available data from an academic journal.
+
+</details>
+
+<details>
+<summary> <b> Classification of Forensic Evidence </b> </summary>
+
+Physical and chemical analyses of various forensic evidence from document forgery, ballistics and biological materials have been classified using Principal Component Analysis (PCA) from scikit-learn. A local database for each class of evidence has been created in order to match future evidence.  
+</details>
+</details>
+
+[linktree]: https://linktr.ee/KemalAkin
+[latex]: https://www.youtube.com/watch?v=7xDRiVObuF4&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=1
+
+## Programming Languages and Other Tools
+
+<img align="left" alt="Python" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/python.png?raw=true" title="Python"/>
+<img align="left" alt="Jupyter" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/jupyter.png?raw=true" title="Jupyter Notebook"/>
+<img align="left" alt="Matlab" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/matlab.png?raw=true" title="Matlab"/>
+<img align="left" alt="Mathematica" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/mathematica.png?raw=true" title="Mathematica"/>
+
+[<img align="left" alt="LaTeX" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/latex.png?raw=true" title="LaTeX"/>][latex]
+
+<img align="left" alt="Markdown" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/md.png?raw=true" title="MarkDown"/>
+<img align="left" alt="Terminal" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/terminal.png?raw=true" title="Terminal"/>
+<img align="left" alt="Git" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/git.png?raw=true" title="Git"/>
+<img align="left" alt="VS Code" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/vsCode.png?raw=true" title="VS Code"/>
+<img align="left" alt="Photoshop" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/ps.png?raw=true" title="Photoshop"/>
+<img align="left" alt="Illustrator" width="30px" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/ai.png?raw=true" title="Illustrator"/>
+
+<br />
+
+## 📺 Talks on YouTube [TR]
+
+- [Inflation in Scalar-Tensor Theories of Gravitation](https://www.youtube.com/watch?v=qY57ptmequE&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=3)
+- [Cosmology: Fundamental Observations and Cosmic Dynamics](https://www.youtube.com/watch?v=jf2ufe3by9U&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=2)
+- [Document Preparation with LaTeX](https://www.youtube.com/watch?v=7xDRiVObuF4&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=1)
+- [Bibliography Management with Mendeley](https://www.youtube.com/watch?v=sk9UYmUwfB4&list=PLmq86vD98cHLb4zneGX-zH1E5cde1_eoa&index=5)
+
+
