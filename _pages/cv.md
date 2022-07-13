@@ -13,7 +13,7 @@ Education
 ======
 * M.Sc. in Physics Engineering, Istanbul Technical University, 2022
   * Thesis: Theoretical and Observational Aspects of Inflationary Cosmology
-* B.S. in Physics Engineering, Istanbul Technical University, 2019
+* B.Sc. in Physics Engineering, Istanbul Technical University, 2019
   * Advanced Physics Project: Dynamics of Dark Energy
   * Graduation Project: Dynamical System Analysis of Quintessence Models
 
@@ -21,7 +21,7 @@ Education
 
 Experience
 ======
-* 2019 - 2022: Research Assistant, Faculty of Engineering and Natural Sciences, Department of Forensic ScienceUskudar University, Istanbul.
+* 2019 - 2022: Research Assistant, Faculty of Engineering and Natural Sciences, Department of Forensic Science, Uskudar University, Istanbul.
   * Designing and conducting physics, ballistics, questioned documents laboratory sessions
   * Teaching physics, ballistics, criminalistics and questioned documents courses (partly) 
   * Performing data analysis by employing proper statistical/ML techniques and computational methods
