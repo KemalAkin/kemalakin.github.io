@@ -82,7 +82,7 @@ analytics:
 author:
   name             : "Details"
   avatar           : "profile.png"
-  bio              : "I am a theoretical and computational physicist working on the origin and evolution of the universe. As a habit, I seek analytical and numerical solutions to any problem I come across in life!"
+  bio              : "I am a theoretical and computational physicist working on the origin and evolution of the universe."
   location         : "Istanbul, Turkey"
   employer         :
   pubmed           : #"https://www.ncbi.nlm.nih.gov/pubmed/?term=john+snow"

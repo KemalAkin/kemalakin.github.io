@@ -12,7 +12,7 @@ redirect_from:
 Education
 ======
 * B.S. in Physics Engineering, Istanbul Technical University, 2019
-  * Advanced Physics Project: Dynamics of Dark Energy
+  * <b>Advanced Physics Project</b>: Dynamics of Dark Energy
   * Graduation Project: Dynamical System Analysis of Quintessence Models
 * M.Sc. in Physics Engineering, Istanbul Technical University, 2022
   * Thesis: Theoretical and Observational Aspects of Inflationary Cosmology

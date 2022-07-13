@@ -5,11 +5,13 @@ permalink: /publication/formalizing-SR
 excerpt: ''
 date: 2020-06-15
 venue: 'Physics of the Dark Universe'
-paperurl: 'http://academicpages.github.io/files/paper1.pdf'
-citation: 'Your Name, You. (2009). &quot;Paper Title Number 1.&quot; <i>Journal 1</i>. 1(1).'
+paperurl: 'http://kemalakin.github.io/files/[Akın2020]FormalizingSRinSTT.pdf'
+citation: 'Akın, K., Arapoğlu A. S., Yükselci, A. E. (2020). &quot;Slow-Roll Inflation in Scalar-Tensor Theories of Gravitation&quot; <i>Physics of the Dark Universe</i>.'
 ---
-This paper is about the number 1. The number 2 is left for future work.
+The viability of slow-roll approximation is examined by considering the structure of phase spaces in scalar-tensor theories of gravitation and the analysis is exemplified with a nonminimally coupled scalar field to the spacetime curvature. The slow-roll field equations are obtained in the Jordan frame in two ways: first using the direct generalization of the slow-roll conditions in the minimal coupling case to nonminimal one, and second, conformal transforming the slow-roll field equations in the Einstein frame to the Jordan frame and then applying the generalized slow-roll conditions. Two inflationary models governed by the potentials $ V(\phi) \propto \phi^2 $ and $ V(\phi) \propto \phi^4 $ are considered to compare the outcomes of two methods based on the analysis of $n_s$ and $r$ values in the light of recent observational data.
 
-[Download paper here](http://academicpages.github.io/files/paper1.pdf)
+[Journal Version:](https://www.sciencedirect.com/science/article/abs/pii/S2212686420303228)
+[arXiv:](http://kemalakin.github.io/files/[Akın2020]FormalizingSRinSTT.pdf)
 
-Recommended citation: Your Name, You. (2009). "Paper Title Number 1." <i>Journal 1</i>. 1(1).
+
+Recommended citation: Akın, K., Arapoğlu A. S., Yükselci, A. E. (2020). "Slow-Roll Inflation in Scalar-Tensor Theories of Gravitation" <i>Physics of the Dark Universe </i>. .
