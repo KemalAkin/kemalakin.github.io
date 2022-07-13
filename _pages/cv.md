@@ -11,11 +11,14 @@ redirect_from:
 
 Education
 ======
-* B.S. in GitHub, GitHub University, 2012
-* M.S. in Jekyll, GitHub University, 2014
-* Ph.D in Version Control Theory, GitHub University, 2018 (expected)
+* B.S. in Physics Engineering, Istanbul Technical University, 2019
+  * Advanced Physics Project: Dynamics of Dark Energy
+  * Graduation Project: Dynamical System Analysis of Quintessence Models
+* M.Sc. in Physics Engineering, Istanbul Technical University, 2022
+  * Thesis: Theoretical and Observational Aspects of Inflationary Cosmology
 
-Work experience
+
+Experience
 ======
 * Summer 2015: Research Assistant
   * Github University
