@@ -12,15 +12,12 @@ redirect_from:
   <h3 align="center">Hi, I'm Kemal </h3>
 </p>
 
-<p align="center">
-  <img alt= "Hey!" src="https://github.com/Kemalakin/Kemalakin/blob/main/figs/dpool.gif?raw=true"  width="480" title="Hey!" />
-</p>
+I am a theoretical and computational physicist working on the origin and evolution of the universe. I seek analytical and numerical solutions to any problem I come across in life!
 
-I am a theoretical and computational physicist working on the origin and evolution of the universe. As a habit, I seek analytical and numerical solutions to any problem I come across in life!
-
-$$
+The major part of works is to solve Einstein Field Equations for various cases: 
+\begin{align*}
 R_{\mu \nu} - \dfrac{1}{2}R g_{\mu \nu} = \dfrac{8 \pi G}{c^4} T_{\mu \nu}
-$$
+\end{align*}
   
 
 Check out [details](#details) to learn more about me!
@@ -29,16 +26,9 @@ Check out [details](#details) to learn more about me!
 [![Twitter Follow](https://img.shields.io/twitter/follow/KemalAkin?color=red&logo=twitter&logoColor=ffffff&style=flat&label=Twitter)](https://twitter.com/KemalAkin)
 [![YouTube](https://img.shields.io/youtube/channel/subscribers/UC1B6zPMQR_MwxY90AOr_f_w?color=red&label=YouTube&logo=youtube&style=flat-square)](https://www.youtube.com/channel/UC1B6zPMQR_MwxY90AOr_f_w)
 
-<!--
-
-- 🔭 I’m currently working on ...
-
--->
-
   
 
 ## Details
-
   
 <details>
 <summary>📫 <b> Contact </b> </summary>
