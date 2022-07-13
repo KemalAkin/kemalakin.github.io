@@ -8,14 +8,9 @@ date: 2015-07-01
 location: "Bogazici University, Turkey"
 ---
 
-Introduction to  ..
+This 1-hour talk serves as a introduction to markup languages, specifically to $\LaTeX$ which is a high-quality typesetting system that includes features designed for the production of technical and scientific documentation. Further, I demonstrate a simple document creation with $\LaTeX$ using TeXMaker in a Linux system. 
 
-You can access the record of the talk [here.](https://www.youtube.com/watch?v=7xDRiVObuF4&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI)
+You can access to record of the talk from [here.](https://www.youtube.com/watch?v=7xDRiVObuF4&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI)
 
-<div align="left">
-      <a href="https://www.youtube.com/watch?v=5yLzZikS15k">
-         <img src="https://img.youtube.com/vi/5yLzZikS15k/0.jpg" style="width:100%;">
-      </a>
-</div>
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/7xDRiVObuF4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/7xDRiVObuF4" title="YouTube video player" frameborder="1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
