@@ -88,7 +88,7 @@ author:
   pubmed           : #"https://www.ncbi.nlm.nih.gov/pubmed/?term=john+snow"
   googlescholar    : "https://scholar.google.com/citations?user=Pq0UrfQAAAAJ"
   email            :
-  researchgate     :  # example: "https://www.researchgate.net/profile/yourprofile"
+  researchgate     : "https://www.researchgate.net/profile/Kemal-Akin"
   uri              :
   bitbucket        :
   codepen          :
@@ -100,9 +100,9 @@ author:
   google_plus      :
   keybase          :
   instagram        :
-  impactstory      : #"https://profiles.impactstory.org/u/xxxx-xxxx-xxxx-xxxx"
+  impactstory      : 
   lastfm           :
-  linkedin         : "https://www.linkedin.com/in/kemal-akin/"
+  linkedin         : "https://www.linkedin.com/in/kemal-akin-960b80a3/"
   orcid            : "http://orcid.org/0000-0002-9989-8134"
   pinterest        :
   soundcloud       :
