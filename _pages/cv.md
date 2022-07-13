@@ -11,24 +11,26 @@ redirect_from:
 
 Education
 ======
-* B.S. in Physics Engineering, Istanbul Technical University, 2019
-  * <b>Advanced Physics Project</b>: Dynamics of Dark Energy
-  * Graduation Project: Dynamical System Analysis of Quintessence Models
 * M.Sc. in Physics Engineering, Istanbul Technical University, 2022
   * Thesis: Theoretical and Observational Aspects of Inflationary Cosmology
+* B.S. in Physics Engineering, Istanbul Technical University, 2019
+  * Advanced Physics Project: Dynamics of Dark Energy
+  * Graduation Project: Dynamical System Analysis of Quintessence Models
+
 
 
 Experience
 ======
-* Summer 2015: Research Assistant
-  * Github University
-  * Duties included: Tagging issues
-  * Supervisor: Professor Git
+* 2019 - 2022: Research Assistant, Uskudar University, Istanbul.
+  * Faculty of Engineering and Natural Sciences, Department of Forensic Science
+  * Major responsibilities and professional activities: 
+    - Designing and conducting physics, ballistics, questioned documents laboratory sessions
+    - Teaching physics, ballistics, criminalistics and questioned documents courses (partly) 
+    - Performing data analysis by employing proper statistical/ML techniques and computational methods
+    - Contributing academical, educational and administrative operations/organizations
 
-* Fall 2015: Research Assistant
-  * Github University
-  * Duties included: Merging pull requests
-  * Supervisor: Professor Hub
+* 2014 - 2016: Astronomy Instructor, Usturlab, Istanbul.
+  * Basic solar system education for children at age 7 - 13
   
 Skills
 ======
@@ -59,4 +61,4 @@ Teaching
   
 Service and leadership
 ======
-* Currently signed in to 43 different slack teams
+* 
