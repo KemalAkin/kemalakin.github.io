@@ -4,7 +4,7 @@ collection: talks
 type: "Talk"
 permalink: /talks/mendeley
 venue: 
-date: 2021-06-14
+date: 2020-06-06
 location: "Uskudar University, Turkey"
 ---
 
