@@ -11,3 +11,9 @@ location: "Bogazici University, Turkey"
 Introduction to  ..
 
 You can access the record of the talk [here.](https://www.youtube.com/watch?v=7xDRiVObuF4&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI)
+
+<div align="left">
+      <a href="https://www.youtube.com/watch?v=5yLzZikS15k">
+         <img src="https://img.youtube.com/vi/5yLzZikS15k/0.jpg" style="width:100%;">
+      </a>
+</div>
