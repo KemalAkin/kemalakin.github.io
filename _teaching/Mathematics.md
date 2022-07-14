@@ -1,9 +1,9 @@
 ---
 title: "Mathematics"
 collection: teaching
-type: "Workshop"
+type: "Undergraduate course"
 permalink: /teaching/2021-spring-forensic-mathematics
-venue: "Uskudar University, Department"
+venue: "Uskudar University"
 date: 2021-04-15
 location: "Istanbul, Turkey"
 ---

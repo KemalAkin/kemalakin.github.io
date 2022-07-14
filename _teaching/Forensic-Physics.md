@@ -3,7 +3,7 @@ title: "Forensic Physics"
 collection: teaching
 type: "Undergraduate course"
 permalink: /teaching/2021-forensic-physics-I-II
-venue: "Uskudar University, Department of Forensic Sciences"
+venue: "Uskudar University"
 date: 2021-02-01
 location: "Istanbul, Turkey"
 ---

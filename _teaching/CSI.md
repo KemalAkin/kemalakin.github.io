@@ -1,9 +1,9 @@
 ---
-title: "Crime Scene Investigation - II"
+title: "Crime Scene Investigation"
 collection: teaching
 type: "Undergraduate course"
 permalink: /teaching/2021-spring-csi
-venue: "Uskudar University, Department of Forensic Sciences"
+venue: "Uskudar University"
 date: 2021-04-01
 location: "Istanbul, Turkey"
 ---
@@ -18,7 +18,7 @@ Topics covered are:
 * Python Simulation: Bloodstain w.r.t Impact Angle
 
 <p align="center">
-  <img alt= "Bloodstain Pattern Analysis" src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/bpa_notes.jpg?raw=true"  width="480" title="Bloodstain Pattern Analysis" />
+  <img alt= "Bloodstain Pattern Analysis" src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/bpa_notes.jpg?raw=true"  width="720" title="Bloodstain Pattern Analysis" />
 </p>
 
 I was also teaching assistant of the whole course.

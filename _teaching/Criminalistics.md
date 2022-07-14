@@ -3,7 +3,7 @@ title: "Criminalistics"
 collection: teaching
 type: "Undergraduate course"
 permalink: /teaching/2021-spring-criminalistics
-venue: "Uskudar University, Department of Forensic Sciences"
+venue: "Uskudar University"
 date: 2014-04-01
 location: "Istanbul, Turkey"
 ---
@@ -17,5 +17,5 @@ Topics covered are:
 * Video Spectral Comparator 
 
 <p align="center">
-  <img alt= "Questioned Document Examination" src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/qdocs_notes.jpg?raw=true"  width="480" title="Questioned Documents" />
+  <img alt= "Questioned Document Examination" src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/qdocs_notes.jpg?raw=true"  width="720" title="Questioned Documents" />
 </p>
