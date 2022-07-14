@@ -9,3 +9,7 @@ location: "Istanbul, Turkey"
 ---
 
 In this committee course, I gave a lecture on Questioned Documents Investigation in a Video Spectral Comperator (VSC).
+
+<p align="center">
+  <img alt= "Questioned Document Examination" src="https://github.com/Kemalakin/Kemalakin.github.io/images/qdocs_notes.jpg"  width="480" title="Hey!" />
+</p>
