@@ -15,6 +15,7 @@ This post will show up by default. To disable scheduling of future posts, edit `
 $\Lambda-\mathrm{CDM}$ is the simplest model that is widely consistent with the observations. 
 
 The following set of equations describe the system:
+
 $$
 \begin{align}
 \begin{split}
@@ -26,6 +27,7 @@ $$
 $$
 
 Using the constraint equation $\Omega_{\text{m}} + \Omega_{\text{r}} + \Omega_{\Lambda} = 1$, the system can be reduced to 2 dimensions,
+
 $$
 \begin{align}
 \begin{split}
@@ -47,9 +49,13 @@ import sympy as sp
 import scipy.odeint
 
 def system(m,r,l,t):
+  .
+  .
+  .
+  .
 
 ```
 
-or you can fork this gist..
+add gist
 
 <script src="https://gist.github.com/Kemalakin/ae29e465c373a7ce7bfb00786b4e6ae6.js"></script>
