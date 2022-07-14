@@ -12,9 +12,12 @@ redirect_from:
 I am a theoretical and computational physicist working on the origin and evolution of the universe. Due to complexity of the problem as a whole, I am also developing algorithms and numerical solutions and testing theoretical models against the latest observations. 
 
 **Contact**
+
 <p align = center>
-<img src="/images/kemalakin.svg" width="400" height="100">
+<img src="https://raw.githubusercontent.com/Kemalakin/kemalakin.github.io/872542ca65f1c53eb1a7fd4297f7e2bfe58f5986/images/kemalakin.svg" width="200" alt="Scan to connect" >
 </p>
+
+
 <!--
 $$
 \begin{align*}
