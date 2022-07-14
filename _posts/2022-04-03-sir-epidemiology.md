@@ -1,11 +1,11 @@
 ---
 title: 'SIR Model'
 date: 2012-08-14
-permalink: /posts/2022/07/SIR/
+permalink: /posts/2022/04/sir/
 tags:
-  - cool posts
-  - category1
-  - category2
+  - Spread of Disease
+  - Computational Epidemiology
+  - SciPy
 ---
 
 # SIR Model for Spread of Disease
