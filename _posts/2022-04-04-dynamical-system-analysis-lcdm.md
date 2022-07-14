@@ -36,7 +36,7 @@ $$
 $$
 where we have eliminated the $\Omega_\Lambda$ term.
 
-![Matter - Radiation - Lambda Model](/images/dsa-lcdm/mrl-2d.png)
+![Matter - Radiation - Lambda Model](https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/dsa-lcdm/mrl-2d.png?raw=true)
 
 You can use the following code to generate phase space diagram..
 
@@ -45,6 +45,8 @@ import numpy as np
 import matplotib.pyplot as plt
 import sympy as sp
 import scipy.odeint
+
+def system(m,r,l,t):
 
 ```
 
