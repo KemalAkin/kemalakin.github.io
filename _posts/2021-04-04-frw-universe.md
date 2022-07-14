@@ -1,7 +1,7 @@
 ---
 title: 'FRW Universe Models'
-date: 2015-08-14
-permalink: /posts/2022/07/frw-models/
+date: 2021-04-04
+permalink: /posts/2021/04/frw-models/
 tags:
   - Cosmology
   - FRW
