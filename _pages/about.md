@@ -11,12 +11,13 @@ redirect_from:
 
 I am a theoretical and computational physicist working on the origin and evolution of the universe. Due to complexity of the problem as a whole, I am also developing algorithms and numerical solutions and testing theoretical models against the latest observations. 
 
+<!--
 $$
 \begin{align*}
 R_{\mu \nu} - \dfrac{1}{2}R g_{\mu \nu} = \dfrac{8 \pi G}{c^4} T_{\mu \nu}
 \end{align*}
 $$
-  
+-->
 
 
 
@@ -24,7 +25,7 @@ $$
 
 
 
-
+<!--
 
 ## 📺 Talks on YouTube [TR]
 
@@ -33,4 +34,4 @@ $$
 - [Document Preparation with LaTeX](https://www.youtube.com/watch?v=7xDRiVObuF4&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=1)
 - [Bibliography Management with Mendeley](https://www.youtube.com/watch?v=sk9UYmUwfB4&list=PLmq86vD98cHLb4zneGX-zH1E5cde1_eoa&index=5)
 
-
+-->
