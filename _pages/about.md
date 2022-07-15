@@ -14,7 +14,7 @@ I am a theoretical and computational physicist working on the origin and evoluti
 **Contact**
 
 <p align = center>
-<img src="https://raw.githubusercontent.com/Kemalakin/kemalakin.github.io/872542ca65f1c53eb1a7fd4297f7e2bfe58f5986/images/kemalakin.svg" width="200" alt="Scan to connect" >
+<img src="https://raw.githubusercontent.com/Kemalakin/kemalakin.github.io/872542ca65f1c53eb1a7fd4297f7e2bfe58f5986/images/kemalakin.svg" width="150" alt="Scan to connect" >
 </p>
 
 
