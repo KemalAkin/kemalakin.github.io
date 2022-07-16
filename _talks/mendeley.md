@@ -8,7 +8,7 @@ date: 2020-06-06
 location: "Uskudar University, Turkey"
 ---
 
-As a part of publicly available distance learning course series, I gave a lecture titled "Bibliography Management with Mendeley". 
+As a part of publicly available distance learning course series, I gave a lecture titled "Bibliography Management with Mendeley". In this brief lecture, I summarize the management system Mendeley and illustrate how to organize source files and prepare bibliography in Word.    
 
 You can access to record of the talk from [here.](https://www.youtube.com/watch?v=sk9UYmUwfB4&list=PLmq86vD98cHLb4zneGX-zH1E5cde1_eoa&index=5)
 

@@ -8,7 +8,7 @@ date: 2016-07-08
 location: "Istanbul Technical University, Turkey"
 ---
 
-This lecture is designed as introduction to cosmology. Dynamics of the universe is formalized with the power of GR starting from the first principles.
+This lecture is designed as an introduction to cosmology. Dynamics of the universe is formalized with the power of GR starting from the first principles. Evolution of the universe for various energy/matter content is derived and current status of the universe is discussed in the light of latest observations.
 
 You can access to record of the talk from [here.](https://www.youtube.com/watch?v=jf2ufe3by9U&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=2)
 
