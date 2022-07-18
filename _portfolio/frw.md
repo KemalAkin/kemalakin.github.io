@@ -1,6 +1,6 @@
 ---
 title: "FRW"
-excerpt: "FRW<br/><img src='/images/frw-universe/frw-thumbnail.png' width='150'>"
+excerpt: "FRW<br/><img src='/images/frw-universe/frw-thumbnail.png' width='200'>"
 collection: portfolio
 ---
 The evolution of the scale factor $a(t)$ is governed by the Friedmann equations. The equations are given by
