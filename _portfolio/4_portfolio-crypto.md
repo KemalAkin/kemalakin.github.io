@@ -1,6 +1,6 @@
 ---
 title: "Portfolio Tracker"
-excerpt: "Portfolio Tracker<br/><img src=' ' width='200'>"
+excerpt: "Automated tracker for your crypto wallet<br/><img src=' ' width='200'>"
 collection: portfolio
 ---
 
