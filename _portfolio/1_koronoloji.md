@@ -1,6 +1,6 @@
 ---
 title: "Koronoloji"
-excerpt: "Koronoloji<br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/dashboard1.jpg?raw=true' width='200'>"
+excerpt: "COVID-19 Tracker for Turkey<br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/dashboard1.jpg?raw=true' width='300'>"
 collection: portfolio
 ---
 
