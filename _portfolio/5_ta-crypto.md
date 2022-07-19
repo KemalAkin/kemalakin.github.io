@@ -10,5 +10,3 @@ The project includes accessing the candlestick data through API, performing oper
   <img src="link to output" alt="Output" width = 300>    
 </p>
 
-<script src="https://apps.elfsight.com/p/platform.js" defer></script>
-<div class="elfsight-app-4f5b0d48-7765-498b-ade7-fbf675e906a3"></div>
