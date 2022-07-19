@@ -26,7 +26,8 @@ R_{\mu \nu} - \dfrac{1}{2}R g_{\mu \nu} = \dfrac{8 \pi G}{c^4} T_{\mu \nu}
 $$
 -->
 
-
+<script src="https://apps.elfsight.com/p/platform.js" defer></script>
+<div class="elfsight-app-4f5b0d48-7765-498b-ade7-fbf675e906a3"></div>
 
   
 
