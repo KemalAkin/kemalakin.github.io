@@ -13,21 +13,3 @@ This personal project has started during COVID-19 outbreak. Case numbers are obt
   <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/dashboard1.jpg?raw=true" alt="Dashboard" width = 300>
 <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/plot1.jpg?raw=true" alt="Dashboard" width = 300>
 </p>
-
----
-carousels:
-  - images: 
-    - image: /images/koronoloji/chart1.jpg
-    - image: /uploads/slider/image2.jpg
-    - image: /uploads/slider/image3.jpg
-    - image: /uploads/slider/image4.jpg
-  - images: 
-    - image: /uploads/slider/image5.jpg
-    - image: /uploads/slider/image6.jpg
-    - image: /uploads/slider/image7.jpg
-    - image: /uploads/slider/image8.jpg
----
-
-{% include carousel.html height="50" unit="%" duration="7" number="1" %}
-
-  {% include carousel.html height="50" unit="%" duration="7" number="2" %}
