@@ -1,8 +1,8 @@
 ---
 title: "Dynamical System Analysis"
-excerpt: "Stability Analysis for Quintessence Models<br/><p align='center'>
+excerpt: "Stability Analysis for Quintessence Models<br/>
   <img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/dashboard1.jpg?raw=true' width = 300>    
-</p>"
+"
 collection: portfolio
 ---
 
