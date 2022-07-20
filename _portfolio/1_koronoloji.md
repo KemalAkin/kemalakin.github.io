@@ -17,7 +17,7 @@ This personal project has started during COVID-19 outbreak. Case numbers are obt
 ---
 carousels:
   - images: 
-    - image: /uploads/slider/image1.jpg
+    - image: /images/koronoloji/chart1.jpg
     - image: /uploads/slider/image2.jpg
     - image: /uploads/slider/image3.jpg
     - image: /uploads/slider/image4.jpg
@@ -27,3 +27,7 @@ carousels:
     - image: /uploads/slider/image7.jpg
     - image: /uploads/slider/image8.jpg
 ---
+
+{% include carousel.html height="50" unit="%" duration="7" number="1" %}
+
+  {% include carousel.html height="50" unit="%" duration="7" number="2" %}
