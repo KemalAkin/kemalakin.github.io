@@ -1,6 +1,8 @@
 ---
 title: "Dynamical System Analysis"
-excerpt: "Stability Analysis for Quintessence Models<br/><img src=' ' width='300'>"
+excerpt: "Stability Analysis for Quintessence Models<br/><p align="center">
+  <img src="link to output" alt="Output" width = 300>    
+</p>"
 collection: portfolio
 ---
 
