@@ -2,11 +2,11 @@
 - selector: example_slider
   captions: true
   images:
-    - src: /img/1.jpg
+    - src: /images/koronoloji/chart1.png
       alt: image one
-    - src: /img/2.jpg
+    - src: /images/koronoloji/chart2.png
       alt: image two
-    - src: /img/3.jpg
+    - src: /images/koronoloji/dashboard1.png
       alt: image three
   settings:
     height: "'auto'"
