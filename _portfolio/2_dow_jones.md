@@ -8,7 +8,7 @@ Data mining, cleaning and creating SQLite DB with Python, visualization and inte
 
 
 <p align="center">
-  <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/dow-jones/dj_pBI.gif?raw=true" alt="Numbers" width = 500>
+  <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/dow-jones/dj_pBI.gif?raw=true" alt="Numbers" width="99%" height="540">
 </p>
 
 <video width="99%" height="540">
