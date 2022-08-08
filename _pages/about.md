@@ -9,12 +9,18 @@ redirect_from:
 ---
 
 <p align="justify">
-I am a theoretical and computational physicist working on the origin and evolution of the universe. Due to complexity of the problem as a whole, I am also developing algorithms and numerical solutions and testing theoretical models against the latest observations. Currently I am pursuing career opportunities in data science and quantitative finance..
+I am a theoretical and computational physicist working on the origin and evolution of the universe. Due to complexity of the problem as a whole, I am also developing algorithms and numerical solutions and testing theoretical models against the latest observations. Currently I am pursuing career opportunities in data science and quantitative finance.
+</p>
 
+<p align="justify">
 In addition to 4 years of experience as a cosmology researcher, I also have 3 years of professional experience as a researcher in the Department of Forensic Sciences where I was responsible for designing/conducting physics, ballistics, questioned document examination laboratory sessions and teaching physics, calculus and data analysis. As a education committee member I had contributions to academical, educational and administrative operations/organizations.
+</p>
 
+<p align="justify">
 I have performed data analysis and visualization for numerous academical projects by employing proper statistical/ML techniques and computational methods. I am fluent in Python, especially in scientific computation and visualization modules such as SciPy, NumPy, Pandas, Matplotlib and Seaborn and I have familiarity with machine learning models.
+</p>
 
+<p align="justify">
 Currently, I am trading cryptocurrency, commodity and BIST stocks using supply-demand analysis and quantitative strategies. Moreover, I am performing sales analytics and developing merchandising strategies for our small-sized family business.
 </p>
 
