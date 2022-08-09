@@ -11,3 +11,4 @@ An alternative to standard model of cosmology ($\Lambda \mathrm{-CDM}$) is devel
 <p align="center">
   <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/dsa-lcdm/mrl-2d.png?raw=true" alt="DSA Quintessence" width = 600>
 </p>
+
