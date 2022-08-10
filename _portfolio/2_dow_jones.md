@@ -20,20 +20,7 @@ A sample output is shown below.
 
 <center><iframe src="https://public.tableau.com/views/MSFTStockPrices/MicrosoftStockPrices?:language=en-US&:display_count=n&:origin=viz_share_link&:showVizHome=no&:embed=true" width="99%" height="540" frameborder="0"></iframe></center>
 
-
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pd</span><span class="o">.</span><span class="n">read_sql</span><span class="p">(</span><span class="s2">&quot;Majors&quot;</span><span class="p">,</span><span class="n">engine</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
+Created data table is given below:
 
 <div class="output_wrapper">
 <div class="output">
@@ -1540,18 +1527,6 @@ A sample output is shown below.
 </div>
 
 </div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span> 
-</pre></div>
 
-    </div>
-</div>
-</div>
-
-</div>
  
 
