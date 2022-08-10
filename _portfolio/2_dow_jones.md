@@ -4,8 +4,9 @@ excerpt: "Exploring Dow Jones <br/><img src='https://github.com/Kemalakin/kemala
 collection: portfolio
 ---
 
-Data mining, cleaning and creating SQLite DB with Python, visualization and interactive dashboard preapared with Power BI & Tableau..
+The *Dow Jones Industrial Average*, is a stock market index of 30 prominent companies listed on stock exchanges in the US. In this project, I obtain the various data of the companies in the index via web scraping (Pandas and Yahoo Finance), clean the data and create a database using Python. Finally, interactive dashboards for are created using Microsoft Power BI and Tableau.
 
+Representative output is shown below.
 
 <p align="center">
   <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/dow-jones/dj_pBI.gif?raw=true" alt="Numbers" width="99%" height="540">
