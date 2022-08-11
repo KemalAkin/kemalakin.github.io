@@ -8,13 +8,18 @@ carousels:
     - image: /images/koronoloji/chart2.jpg
     - image: /images/koronoloji/dashboard1.jpg
     - image: /images/koronoloji/plot1.jpg
+  - images: 
+    - image: /images/koronoloji/chart1.jpg
+    - image: /images/koronoloji/chart2.jpg
+    - image: /images/koronoloji/dashboard1.jpg
+    - image: /images/koronoloji/plot1.jpg
 ---
 
 This personal project has started during COVID-19 outbreak. Case numbers are obtained by web scraping with Beautiful-Soap, local datasets are created, calculation of death/recovery rate, data fitting, visualization are performed with Python, native Excel functions and Adobe Illustrator. Daily numbers and charts are posted using automation scripts to social media through APIs. Currently, website is not active, however Instagram account is still available: [@koronoloji_com](https://www.instagram.com/koronoloji_com/)
 
-{% include carousel.html height="80" unit="%" duration="3" number="1" %}
+{% include carousel.html width="99" unit="%" duration="3" number="1" %}
 
-{% include carousel.html height="80" unit="%" duration="3" number="2" %}
+{% include carousel.html height="50" unit="%" duration="3" number="2" %}
 
 <!--
 <p align="center">
