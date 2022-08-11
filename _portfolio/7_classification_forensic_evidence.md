@@ -1,6 +1,6 @@
 ---
 title: "Classification of Forensic Evidence"
-excerpt: "PCA for Forensic Evidence<br/><img src=' ' width='300'>"
+excerpt: "PCA for Forensic Evidence<br/><img src=' ' width='350'><br/>"
 collection: portfolio
 ---
 <p align="justify">

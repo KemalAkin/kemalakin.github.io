@@ -1,6 +1,6 @@
 ---
 title: "Sales Dashboard"
-excerpt: "Bike Sales Dashboard for ****<br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/int-dashboard/dashboard.gif?raw=true' width='300'>"
+excerpt: "Bike Sales Dashboard for ****<br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/int-dashboard/dashboard.gif?raw=true' width='350'><br/>"
 collection: portfolio
 ---
 

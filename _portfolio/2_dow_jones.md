@@ -1,6 +1,6 @@
 ---
 title: "Exploring Dow Jones"
-excerpt: "Data mining, cleaning and creating SQLite DB with Python, visualization and interactive dashboard prepared with Power BI & Tableau <br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/dow-jones/dj_pBI.gif?raw=true' width='300'>"
+excerpt: "Data mining, cleaning and creating SQLite DB with Python, visualization and interactive dashboard prepared with Power BI & Tableau <br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/dow-jones/dj_pBI.gif?raw=true' width='350'><br/>"
 collection: portfolio
 ---
 

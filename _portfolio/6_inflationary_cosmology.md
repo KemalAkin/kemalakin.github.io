@@ -1,6 +1,6 @@
 ---
 title: "Inflationary Cosmology"
-excerpt: "Theoretical and Observational Aspects of Inflationary Cosmology<br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/inflationary-cosmology/inf-observables.png?raw=true ' width='300'>"
+excerpt: "Theoretical and Observational Aspects of Inflationary Cosmology<br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/inflationary-cosmology/inf-observables.png?raw=true' width='350'><br/>"
 collection: portfolio
 ---
 

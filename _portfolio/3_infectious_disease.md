@@ -1,6 +1,6 @@
 ---
 title: "Spread of Infectious Disease"
-excerpt: "SIR model for infectious diseases<br/><img src=' ' width='300'>"
+excerpt: "SIR model for infectious diseases<br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/sir-model.jpeg?raw=true' width='350'><br/>"
 collection: portfolio
 ---
 

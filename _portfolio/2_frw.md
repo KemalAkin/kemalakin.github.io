@@ -1,6 +1,6 @@
 ---
 title: "FRW Universe Models"
-excerpt: "Evolution of the universe for various eenrgy/matter contents<br/><img src='/images/frw-universe/frw-thumbnail2.png' width='300'>"
+excerpt: "Evolution of the universe for various eenrgy/matter contents<br/><img src='/images/frw-universe/frw-thumbnail2.png' width='350'><br/>"
 collection: portfolio
 ---
 The evolution of the scale factor $a(t)$ is governed by the Friedmann equations. The equations are given by

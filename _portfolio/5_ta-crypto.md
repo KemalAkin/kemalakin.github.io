@@ -1,6 +1,6 @@
 ---
 title: "Technical Analysis of Stock/Crypto Markets"
-excerpt: "Technical Analysis of Stock/Crypto Markets<br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/technical-analysis/btc-daily.png?raw=true' width='300'>"
+excerpt: "Technical Analysis of Stock/Crypto Markets<br/><img src='https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/technical-analysis/btc-daily.png?raw=true' width='350'><br/>"
 collection: portfolio
 ---
 
