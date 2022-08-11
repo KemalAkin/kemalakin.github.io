@@ -40,7 +40,7 @@
 </div>
 
 <style>
-.carousel__holder {width: 100%; position: relative; padding-bottom: {{ include.height }}{{ include.unit }}; margin: 1rem 0 1rem;}
+.carousel__holder {width: 90%; height: 500; position: relative; padding-bottom: {{ include.height }}{{ include.unit }}; margin: 1rem 0 1rem;}
 .carousel {
   height: 100%;
   width: 100%;
@@ -88,7 +88,7 @@
   cursor: pointer;
   border-width: 5px 5px 0 0;
   border-style: solid;
-  border-color: #363636;
+  border-color: #7e7e7e;
   opacity: 0.35;
   opacity: 1;
   outline: 0;
@@ -168,7 +168,7 @@
   width: 30px;
 }
 .carousel__indicator {
-  background-color: #fafafa;
+  background-color: #7e7e7e;
 }
 {% for item in page.carousels[number].images %}
 .carousel__slide:nth-of-type({{ forloop.index }}),
