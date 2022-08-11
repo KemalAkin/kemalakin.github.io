@@ -3,9 +3,9 @@ title: "Bibliography Management with Mendeley"
 collection: talks
 type: "Talk"
 permalink: /talks/mendeley
-venue: 
+venue: "Distanced Learning Series, Uskudar University"
 date: 2020-06-06
-location: "Uskudar University, Turkey"
+location: "Istanbul, Turkey"
 ---
 
 As a part of publicly available distance learning course series, I gave a lecture titled "Bibliography Management with Mendeley". In this brief lecture, I summarize the management system Mendeley and illustrate how to organize source files and prepare bibliography in Word.    

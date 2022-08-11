@@ -36,8 +36,12 @@ Few rows and columns from the created data table is shown below.
         vertical-align: top;
     }
 
-    .dataframe thead th {
-        text-align: right;
+    .dataframe thead tr th {
+        text-align: center;
+    }
+
+    .dataframe tbody tr td {
+        text-align: center;
     }
 </style>
 <table border="1" class="dataframe">
@@ -97,7 +101,4 @@ Few rows and columns from the created data table is shown below.
   </tbody>
 </table>
 </div>
-
-
- 
 

@@ -58,6 +58,55 @@ Teaching
     {% include archive-single-cv.html %}
   {% endfor %}</ul>
   
-Service and leadership
+Professional and Administrative Activities
 ======
-* 
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead tr th {
+        text-align: center;
+    }
+
+    .dataframe tbody tr td {
+        text-align: center;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr>
+      <th>Role</th>
+      <th>Organization</th>
+      <th>Year</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Member and Reporter</td>
+      <td>Education Committee, Uskudar University</td>
+      <td>2019 - 2021</td>
+    </tr>
+    <tr>
+      <td>ITU Representative</td>
+      <td>International Association of Physics Students (IAPS)</td>
+      <td>2015 - 2018</td>
+    </tr>
+    <tr>
+      <td>President</td>
+      <td>Physics Engineering Club, Istanbul Technical University</td>
+      <td>2014 - 2015</td>
+    </tr>
+    <tr>
+      <td>Member</td>
+      <td>Chamber of Physics Engineers</td>
+      <td>2016 </td>
+    </tr>
+  </tbody>
+</table>
+</div>

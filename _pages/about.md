@@ -33,6 +33,9 @@ Currently, I am trading cryptocurrency, commodity and BIST stocks using supply-d
 
 <!--
 $$
+
+bundle exec jekyll serve
+
 \begin{align*}
 R_{\mu \nu} - \dfrac{1}{2}R g_{\mu \nu} = \dfrac{8 \pi G}{c^4} T_{\mu \nu}
 \end{align*}
