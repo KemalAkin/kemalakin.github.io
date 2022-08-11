@@ -10,43 +10,46 @@ Strong theory of the early universe is investigated starting from first principl
   <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/inflationary-cosmology/inf-observables.png?raw=true " alt="Output" width = 600>    
 </p>
 
+<head>
+<link rel="stylesheet" type="text/css" href="../StyleAndScripts/mySlider.css">
 
-<link rel="stylesheet" type="text/css" href="..\StyleAndScripts\mySlider.css">
+<script src="../StyleAndScripts/mySlider.js"></script>
 
-<script src="..\StyleAndScripts\mySlider.js"></script>
+</head>
 
+<body>
 <!-- Container for the image gallery -->
 <div class="container">
 
   <!-- Full-width images with number text -->
   <div class="mySlides">
     <div class="numbertext">1 / 6</div>
-      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/chart1.jpg?raw=true" style="width:100%">
+      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/chart1.jpg?raw=true" style="width:40%">
   </div>
 
   <div class="mySlides">
     <div class="numbertext">2 / 6</div>
-      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/chart2.jpg?raw=true" style="width:100%">
+      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/chart2.jpg?raw=true" style="width:40%">
   </div>
 
   <div class="mySlides">
     <div class="numbertext">3 / 6</div>
-      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/dashboard1.jpg?raw=true" style="width:100%">
+      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/dashboard1.jpg?raw=true" style="width:40%">
   </div>
 
   <div class="mySlides">
     <div class="numbertext">4 / 6</div>
-      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/dashboard2.jpg?raw=true" style="width:100%">
+      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/dashboard2.jpg?raw=true" style="width:40%">
   </div>
 
   <div class="mySlides">
     <div class="numbertext">5 / 6</div>
-      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/plot1.jpg?raw=true" style="width:100%">
+      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/plot1.jpg?raw=true" style="width:40%">
   </div>
 
   <div class="mySlides">
     <div class="numbertext">6 / 6</div>
-      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/sir-model.jpeg?raw=true" style="width:100%">
+      <img src="https://github.com/Kemalakin/kemalakin.github.io/blob/master/images/koronoloji/sir-model.jpeg?raw=true" style="width:40%">
   </div>
 
   <!-- Next and previous buttons -->
@@ -80,3 +83,5 @@ Strong theory of the early universe is investigated starting from first principl
     </div>
   </div>
 </div>
+
+</body>
