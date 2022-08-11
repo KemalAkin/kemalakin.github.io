@@ -4,7 +4,7 @@ excerpt: "COVID-19 Tracker for Turkey<br/><img src='https://github.com/Kemalakin
 collection: portfolio
 carousels:
   - images: 
-    - image: /images/koronoloji/chart1.jpg
+    - image: /images/koronoloji/plot1.jpg
     - image: /images/koronoloji/chart2.jpg
     - image: /images/koronoloji/dashboard1.jpg
     - image: /images/koronoloji/plot1.jpg
