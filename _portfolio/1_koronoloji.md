@@ -20,7 +20,7 @@ This personal project has started during COVID-19 outbreak. Case numbers are obt
 
 {% include carousel.html width="99" unit="%" duration="3" number="1" %}
 
-{% include carousel.html height="99" unit="%" duration="3" number="2" %}
+{% include carousel.html height="100" unit="vh" duration="3" number="2" %}
 
 <!--
 <p align="center">
