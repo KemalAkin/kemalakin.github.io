@@ -21,7 +21,7 @@ I have performed data analysis and visualization for numerous academical project
 </p>
 
 <p align="justify">
-Currently, I am trading cryptocurrency, commodity and BIST stocks using supply-demand analysis and quantitative strategies. Moreover, I am performing sales analytics and developing merchandising strategies for our small-sized family business.
+Currently, I am trading cryptocurrency, commodity and BIST stocks using supply-demand analysis and quantitative strategies.
 </p>
 
 **Contact**

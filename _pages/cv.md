@@ -22,6 +22,7 @@ Education
 Experience
 ======
 * 2019 - 2022: Research Assistant, Faculty of Engineering and Natural Sciences, Department of Forensic Science, Uskudar University, Istanbul.
+  * Applying scientific principles and methods to the analysis, identification, and classification of physical evidence relating to criminal (or suspected criminal) cases
   * Designing and conducting physics, ballistics, questioned documents laboratory sessions
   * Teaching physics, ballistics, criminalistics and questioned documents courses (partly) 
   * Performing data analysis by employing proper statistical/ML techniques and computational methods
@@ -45,7 +46,7 @@ Publications
     {% include archive-single-cv.html %}
   {% endfor %}</ul>
   
-Talks
+Talks and Presentations
 ======
   <ul>{% for post in site.talks %}
     {% include archive-single-talk-cv.html %}
