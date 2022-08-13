@@ -4,7 +4,7 @@ excerpt: "Data mining, cleaning and creating SQLite DB with Python, visualizatio
 collection: portfolio
 ---
 <p align="justify">
-The <em> Dow Jones Industrial Average</em>, is a stock market index of 30 prominent companies listed on stock exchanges in the US. In this project, I obtain the various data of the companies in the index via web scraping (Pandas and Yahoo Finance), clean the data and create a database using Python. Finally, interactive dashboards for are created using Microsoft Power BI and Tableau. <br/>
+The <em> Dow Jones Industrial Average</em>, is a stock market index of 30 prominent companies listed on stock exchanges in the US. In this project, I obtain the various data of the companies in the index via web scraping (Pandas and Yahoo Finance), clean the data and create a database using Python. Finally, interactive dashboards are created using Microsoft Power BI and Tableau. <br/>
 
 A sample output is shown below.
 

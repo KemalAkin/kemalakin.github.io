@@ -23,9 +23,9 @@ Experience
 ======
 * 2019 - 2022: Research Assistant, Faculty of Engineering and Natural Sciences, Department of Forensic Science, Uskudar University, Istanbul.
   * Applying scientific principles and methods to the analysis, identification, and classification of physical evidence relating to criminal (or suspected criminal) cases
+  * Performing data analysis by employing proper statistical/ML techniques and computational methods
   * Designing and conducting physics, ballistics, questioned documents laboratory sessions
   * Teaching physics, ballistics, criminalistics and questioned documents courses (partly) 
-  * Performing data analysis by employing proper statistical/ML techniques and computational methods
   * Contributing academical, educational and administrative operations/organizations
 
 * 2014 - 2016: Astronomy Instructor, Usturlab, Istanbul.
@@ -93,14 +93,24 @@ Professional and Administrative Activities
       <td>2019 - 2021</td>
     </tr>
     <tr>
-      <td>ITU Representative</td>
-      <td>International Association of Physics Students (IAPS)</td>
+      <td>Member</td>
+      <td>Association of Forensic Science</td>
+      <td>2019 - 2021</td>
+    </tr>
+    <tr>
+      <td>ITU Representative <br/> Board Member</td>
+      <td>International Association of Physics Students (IAPS) and LC-Istanbul</td>
       <td>2015 - 2018</td>
     </tr>
     <tr>
-      <td>President</td>
+      <td>Founding Member <br/> President </td>
+      <td>Istanbul Physics Students Society</td>
+      <td>2015 - 2018</td>
+    </tr>
+    <tr>
+      <td>Member <br/> Vice President <br/> President</td>
       <td>Physics Engineering Club, Istanbul Technical University</td>
-      <td>2014 - 2015</td>
+      <td>2013 - 2016</td>
     </tr>
     <tr>
       <td>Member</td>
@@ -110,3 +120,4 @@ Professional and Administrative Activities
   </tbody>
 </table>
 </div>
+
