@@ -20,7 +20,7 @@ $$ \begin{align}
 \end{aligned} 
 \end{align} $$
 
-where $ N = S + I + R $ is the population size.
+where $\beta$ is the infection rate, $\gamma$ is the recovery rate, and $ N = S + I + R $ is the population size. 
 
 In the same manner, a model for spread of HIV infection in the body can be constructed. Numerical solutions of coupled differential equations are shown below:
 <p align="center">
