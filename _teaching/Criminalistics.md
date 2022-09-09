@@ -4,7 +4,7 @@ collection: teaching
 type: "Undergraduate course"
 permalink: /teaching/2021-spring-criminalistics
 venue: "Uskudar University"
-date: 2014-04-01
+date: 2021-04-01
 location: "Istanbul, Turkey"
 ---
 
