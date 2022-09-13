@@ -59,4 +59,8 @@ $$
 - [Document Preparation with LaTeX](https://www.youtube.com/watch?v=7xDRiVObuF4&list=PL23uNIuuSqCIDCQCOXHiNVPXMQ9auzxqI&index=1)
 - [Bibliography Management with Mendeley](https://www.youtube.com/watch?v=sk9UYmUwfB4&list=PLmq86vD98cHLb4zneGX-zH1E5cde1_eoa&index=5)
 
+
+# Jovian example
+<iframe src="https://jovian.ai/embed?url=https://jovian.ai/kemalakin/ab-testing/v/1&cellId=0" title="Jovian Viewer" height="248" width="100%" style="margin 0 auto; max-width: 800px;" frameborder="0" scrolling="auto"></iframe>
+
 -->
