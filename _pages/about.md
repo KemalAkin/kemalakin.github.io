@@ -13,7 +13,7 @@ I am a theoretical and computational physicist working on the origin and evoluti
 </p>
 
 <p align="justify">
-In addition to 4 years of experience as a cosmology researcher, I also have 3 years of professional experience as a researcher in the Department of Forensic Sciences where I was responsible for designing/conducting physics, ballistics, questioned document examination laboratory sessions and teaching physics, calculus and data analysis. As a education committee member I had contributions to academical, educational and administrative operations/organizations.
+In addition to 4 years of experience as a cosmology researcher, I also have 3 years of professional experience as a researcher in the Department of Forensic Sciences where I was responsible for applying scientific principles and methods to the analysis, identification, and classification of physical evidence in criminal cases. As a education committee member I had contributions to academical, educational and administrative operations/organizations.
 </p>
 
 <p align="justify">
@@ -21,7 +21,7 @@ I have performed data analysis and visualization for numerous academical project
 </p>
 
 <p align="justify">
-Currently, I am trading cryptocurrency, commodity and BIST stocks using supply-demand analysis and quantitative strategies. Moreover, I am performing sales analytics and developing merchandising strategies for small-sized family business.
+Currently, I am trading cryptocurrency, commodity and NASDAQ & BIST stocks using supply-demand and quantitative strategies. Moreover, I am performing sales analytics and developing merchandising strategies for small-sized family business. 
 </p>
 
 **Contact**
