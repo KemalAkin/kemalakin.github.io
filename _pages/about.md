@@ -24,13 +24,14 @@ I have performed data analysis and visualization for numerous academical project
 After a year of day-trading in derivative markets, I now work as a research and reporting specialist in a fintech company.
 </p>
 
+<!--
 **Contact**
 
 <p align = center>
 <img src="https://raw.githubusercontent.com/Kemalakin/kemalakin.github.io/872542ca65f1c53eb1a7fd4297f7e2bfe58f5986/images/kemalakin.svg" width="150" alt="Scan to connect" >
 </p>
 
-
+-->
 <!--
 $$
 
