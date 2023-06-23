@@ -21,7 +21,7 @@ I have performed data analysis and visualization for numerous academical project
 </p>
 
 <p align="justify">
-Currently, I am trading cryptocurrency, commodity and NASDAQ & BIST stocks using supply-demand and quantitative strategies. Moreover, I am performing sales analytics and developing merchandising strategies for small-sized family business. 
+After a year of day-trading in derivative markets, I now work as a research and reporting specialist in a fintech company.
 </p>
 
 **Contact**

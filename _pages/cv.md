@@ -21,7 +21,10 @@ Education
 
 Experience
 ======
-* 2019 - 2022: Research Assistant, Faculty of Engineering and Natural Sciences, Department of Forensic Science, Uskudar University, Istanbul.
+* December 2022 - Present: Research and Reporting Specialist, A FinTech Company
+* November 2021 - December 2022: Trader, Self Employed
+  * FX, Cryptocurrency, Commodity and American Indices in derivatives market    
+* April 2019 - November 2021: Research Assistant, Faculty of Engineering and Natural Sciences, Department of Forensic Science, Uskudar University, Istanbul.
   * Applying scientific principles and methods to the analysis, identification, and classification of physical evidence relating to criminal (or suspected criminal) cases
   * Performing data analysis by employing proper statistical/ML techniques and computational methods
   * Designing and conducting physics, ballistics, questioned documents laboratory sessions along with the theoretical courses
@@ -35,7 +38,7 @@ Skills
 * Programming and Computation
   * Python, Matlab/GNU Octave, Mathematica, $\LaTeX$
 * Software
-  * Tableau, Power BI, IBM SPSS, MS/Open Office, Photoshop, Illustrator/Inkscape
+  * Tableau, Power BI, IBM SPSS, Looker Studio, MS/Open Office, Photoshop, Illustrator/Inkscape
 * Language
   * Turkish (Native), English (Professional Proficiency)
 
