@@ -201,6 +201,11 @@ section.block { padding-block: 64px 24px; }
 .prose th { font-family: var(--f-mono); font-size: 0.75rem; font-weight: 500; color: var(--muted); }
 .prose .expressive-code { margin: 14px 0 26px; max-width: none; }
 .prose figure { margin: 20px 0 28px; }
+/* Wide screens: interactive figures, code and embeds break out of the 760px text column to 1000px,
+   text keeps its reading width. Legacy raster images stay at text width (they are low resolution). */
+@media (min-width: 1180px) {
+  .prose > :is(.fig, .expressive-code, .embed) { width: 1000px; max-width: none; margin-left: -120px; margin-right: -120px; }
+}
 
 /* ---------- interactive figures (shared by SirExplorer, GbmExplorer) ---------- */
 .fig {

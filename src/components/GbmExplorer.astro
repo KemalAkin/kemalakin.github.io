@@ -222,6 +222,8 @@ const { mu = 0.06, sigma = 0.38 } = Astro.props;
 </script>
 
 <style>
-  .gbm-plot { position: relative; aspect-ratio: 16 / 9; min-height: 280px; }
+  .gbm-plot { position: relative; width: 100%; aspect-ratio: 16 / 9; }
+  /* phones: a fixed height instead of 16:9, which would be too flat to read */
+  @media (max-width: 620px) { .gbm-plot { aspect-ratio: auto; height: 300px; } }
   .gbm-plot canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 </style>

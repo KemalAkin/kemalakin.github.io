@@ -16,6 +16,7 @@ Personal site of Kemal Akın. Astro 7 + Tailwind v4 + MDX, deployed to GitHub Pa
 - `npm run dev` — dev server on :4321
 - `npm run build` — `astro check` + `astro build` (CI runs the same)
 - `npx astro preview` — serve `dist/` (Astro 7 runs it as a daemon; `npx astro preview stop`)
+- `node scripts/og.mjs` — regenerate `public/og.png` (social preview) after a design change
 
 ## Layout
 - `src/site.ts` — name, tagline, social links, nav.
@@ -39,5 +40,8 @@ Personal site of Kemal Akın. Astro 7 + Tailwind v4 + MDX, deployed to GitHub Pa
   Use `aligned` (not `align`) and add row spacing (`\\[1ex]`) for stacked fractions.
 - Code blocks: Expressive Code, terminal frame by default; give a `title="file.py"`.
 - Old academicpages URLs are mapped in `astro.config.mjs` (`legacyRedirects`). Never remove an entry.
+- Drafts: `draft: true` shows a note in `npm run dev` only. Name unpublished files `<slug>.draft.mdx`
+  with `slug: <slug>` in front matter; that pattern is gitignored so draft text never reaches the public repo.
+- KaTeX CSS is imported in `Article.astro` only; pages with math must use that layout.
 - A new note: `src/content/writing/<slug>.mdx`; a project: `src/content/work/<slug>.mdx`
   (`featured: true` + `thumb` puts it on the home grid).
