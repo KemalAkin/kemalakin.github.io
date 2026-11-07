@@ -12,7 +12,7 @@ const d = entry.data;
 <a class="post-row" href={`/writing/${entry.id}/`}>
   <span class="d">{formatDate(d.date, { year: "numeric" })}</span>
   <span class="ttl">{d.title}</span>
-  {d.interactive && <span class="badge on">interactive</span>}
+  {d.draft ? <span class="badge draft">draft</span> : d.interactive && <span class="badge on">interactive</span>}
   <span class="sub">{[d.topic, ...d.tags.slice(0, 2)].join(" · ")}</span>
 </a>
 
@@ -40,5 +40,6 @@ const d = entry.data;
   }
   @media (min-width: 760px) { .badge { grid-column: 3; grid-row: 1; justify-self: end; } }
   .badge.on { color: var(--warm); border-color: color-mix(in srgb, var(--warm) 45%, transparent); background: var(--warm-soft); }
+  .badge.draft { color: var(--accent); border-color: var(--accent); border-style: dashed; }
   .post-row:hover .ttl { color: var(--accent); }
 </style>

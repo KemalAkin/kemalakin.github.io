@@ -1,3 +1,5 @@
+import type { CollectionEntry } from "astro:content";
+
 export const SITE = {
   name: "Kemal Akın",
   tagline: "Physicist, data scientist",
@@ -28,4 +30,9 @@ export function readingTime(body: string | undefined): string {
 
 export function formatDate(d: Date, opts: Intl.DateTimeFormatOptions = { year: "numeric", month: "short" }): string {
   return d.toLocaleDateString("en-GB", { ...opts, timeZone: "UTC" });
+}
+
+/** Drafts render in `npm run dev` only; production builds and the RSS feed never include them. */
+export function isPublished(entry: CollectionEntry<"writing">): boolean {
+  return import.meta.env.DEV || !entry.data.draft;
 }
