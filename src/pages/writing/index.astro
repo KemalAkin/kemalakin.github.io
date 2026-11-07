@@ -2,8 +2,9 @@
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import PostRow from "../../components/PostRow.astro";
+import { isPublished } from "../../site";
 
-const posts = (await getCollection("writing", (p) => !p.data.draft)).sort((a, b) => +b.data.date - +a.data.date);
+const posts = (await getCollection("writing", isPublished)).sort((a, b) => +b.data.date - +a.data.date);
 ---
 
 <Base title="Writing" description="Notes on cosmology, dynamical systems, numerical methods and markets, with equations, code and figures you can play with.">

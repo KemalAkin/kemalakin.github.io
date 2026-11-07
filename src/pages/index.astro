@@ -6,11 +6,12 @@ import WorkCard from "../components/WorkCard.astro";
 import PostRow from "../components/PostRow.astro";
 import ResearchSummary from "../components/ResearchSummary.astro";
 import ThumbsInit from "../components/ThumbsInit.astro";
+import { isPublished } from "../site";
 
 const work = (await getCollection("work")).sort((a, b) => a.data.order - b.data.order);
 const featured = work.filter((w) => w.data.featured);
 const more = work.filter((w) => !w.data.featured);
-const posts = (await getCollection("writing", (p) => !p.data.draft)).sort((a, b) => +b.data.date - +a.data.date);
+const posts = (await getCollection("writing", isPublished)).sort((a, b) => +b.data.date - +a.data.date);
 const latest = posts.find((p) => p.data.interactive) ?? posts[0];
 ---
 
@@ -65,9 +66,12 @@ const latest = posts.find((p) => p.data.interactive) ?? posts[0];
 <style>
   .work-grid { display: grid; gap: 36px 28px; }
   @media (min-width: 760px) { .work-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  /* Wide screens: all four featured projects in one row keeps the section short. */
+  @media (min-width: 1240px) { .work-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 36px 24px; } }
   .more { margin-top: 48px; display: grid; gap: 12px; }
   .more ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0 28px; }
   @media (min-width: 760px) { .more ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1240px) { .more ul { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   .more li { border-top: 1px solid var(--line); }
   .more a { display: grid; gap: 2px; padding: 12px 0; text-decoration: none; }
   .mt { font-weight: 500; transition: color 0.15s ease; }

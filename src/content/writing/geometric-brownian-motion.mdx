@@ -1,0 +1,96 @@
+---
+title: Why the typical price path loses
+description: Geometric Brownian motion, the model behind the Monte Carlo scene on the home page. A price can grow on average and still end below its start more often than not.
+date: 2026-11-07
+topic: Quantitative finance
+tags: [Monte Carlo, Stochastic calculus]
+interactive: true
+---
+
+import GbmExplorer from "../../components/GbmExplorer.astro";
+import Callout from "../../components/mdx/Callout.astro";
+
+The Monte Carlo panel on the home page draws 64 price paths a year long and stacks where they end into a
+histogram. Watch it for a few runs and something looks off: the model is set to grow 6% a year, yet about half
+of the paths end below where they started. Nothing is broken. That is what compounding does to a noisy price.
+
+## The model
+
+Geometric Brownian motion says the *relative* change of a price $S$ over a short time $dt$ is a constant drift
+plus noise:
+
+$$
+dS = \mu S\,dt + \sigma S\,dW
+$$
+
+Here $\mu$ is the drift, $\sigma$ the volatility and $dW$ the increment of a Brownian motion, a normal draw with
+variance $dt$. Applying Itô's lemma to $\ln S$ gives a closed-form solution,
+
+$$
+S_T = S_0 \exp\!\Big( \big(\mu - \tfrac{1}{2}\sigma^2\big)\,T + \sigma W_T \Big),
+$$
+
+so $\ln S_T$ is normal and $S_T$ is lognormal. The extra $-\tfrac{1}{2}\sigma^2$ is the whole story.
+
+## Mean and median part ways
+
+Take the expectation and the noise term contributes $e^{\sigma^2 T/2}$, which exactly cancels the correction:
+
+$$
+\mathbb{E}[S_T] = S_0\, e^{\mu T}, \qquad \operatorname{median}(S_T) = S_0\, e^{(\mu - \sigma^2/2)\,T}.
+$$
+
+The mean grows at $\mu$; the typical path grows at $\mu - \sigma^2/2$. The gap, $\sigma^2/2$ per year, is
+often called *volatility drag*. A few lucky paths that end far above the rest pull the mean up, while most paths
+sit below it. The chance of ending below the starting price is
+
+$$
+\mathbb{P}(S_T < S_0) = \Phi\!\left( -\frac{(\mu - \sigma^2/2)\sqrt{T}}{\sigma} \right),
+$$
+
+with $\Phi$ the standard normal distribution function.
+
+<GbmExplorer />
+
+The figure starts with the home page's settings, $\mu = 6\%$ and $\sigma = 38\%$. The drag is $7.2\%$, larger
+than the drift, so the expected price after a year is about $106$ while the median is about $98.8$, and roughly
+$51\%$ of paths end below $100$. Push $\sigma$ to $80\%$ with $\mu = 10\%$ and the median falls to about $80$
+while the mean rises to $110.5$; about $61\%$ of paths now lose.
+
+<Callout label="Reading the chart">
+The price axis is logarithmic, so the mean and median paths are straight lines and the histogram on the right
+is the normal density of $\ln S_T$. Drag a slider and the same random shocks are reused, so you see the paths
+bend rather than jump. Re-run draws new shocks.
+</Callout>
+
+## Simulating it
+
+Because the solution is exact, there is no need for a small-step integrator: draw normal increments, add the
+drift in log space and exponentiate.
+
+```python title="gbm.py"
+import numpy as np
+
+def gbm_paths(s0, mu, sigma, years=1.0, steps=252, n=400, seed=7):
+    rng = np.random.default_rng(seed)
+    dt = years / steps
+    shocks = rng.standard_normal((n, steps))
+    log_steps = (mu - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * shocks
+    log_paths = np.cumsum(log_steps, axis=1)
+    return s0 * np.exp(np.hstack([np.zeros((n, 1)), log_paths]))
+
+paths = gbm_paths(100, mu=0.06, sigma=0.38, n=100_000)
+final = paths[:, -1]
+print(f"mean {final.mean():.1f}  median {np.median(final):.1f}  "
+      f"below start {(final < 100).mean():.1%}")
+```
+
+With a large `n` the printout lands on the theory: mean near $106.2$, median near $98.8$, a little over half the
+paths below the start.
+
+## Why it matters
+
+Volatility drag is why a portfolio's average return and its compounded return differ, why leveraged products
+decay in sideways markets, and why "expected value" can describe almost nobody's actual outcome. The model is
+deliberately simple; real prices have fat tails and changing volatility. The gap between mean and median survives
+those refinements, and it only gets wider as volatility rises.

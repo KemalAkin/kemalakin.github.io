@@ -1,10 +1,11 @@
 ---
 // Hero instrument: four live scenes (tabs) on one canvas. Logic lives in src/scripts/instrument.ts.
+// `note` links each scene to the note that explains it; a scene without one shows no link.
 const scenes = [
-  { id: "pendulum", label: "Pendulum" },
-  { id: "hubble", label: "Hubble flow" },
-  { id: "monte", label: "Monte Carlo" },
-  { id: "lorenz", label: "Lorenz" },
+  { id: "pendulum", label: "Pendulum", note: "/writing/dynamical-system-lcdm/" },
+  { id: "hubble", label: "Hubble flow", note: "/writing/frw-universe/" },
+  { id: "monte", label: "Monte Carlo", note: "/writing/geometric-brownian-motion/" },
+  { id: "lorenz", label: "Lorenz", note: undefined },
 ];
 ---
 
@@ -12,12 +13,12 @@ const scenes = [
   <div class="inst-head">
     <div class="scene-tabs" role="tablist" aria-label="Hero animation">
       {scenes.map((s, i) => (
-        <button class="scene-tab" type="button" role="tab" data-scene={s.id} aria-selected={i === 0 ? "true" : "false"}>{s.label}</button>
+        <button class="scene-tab" type="button" role="tab" id={`scene-tab-${s.id}`} aria-controls="hero-plot" data-scene={s.id} data-note={s.note} aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1}>{s.label}</button>
       ))}
     </div>
     <span class="live">live</span>
   </div>
-  <div class="plot">
+  <div class="plot" id="hero-plot" role="tabpanel" aria-labelledby="scene-tab-pendulum">
     <canvas aria-label="Animated figure. Tap to interact." role="img"></canvas>
     <div class="overlay" data-overlay>
       <div class="axis-x"></div>
@@ -34,6 +35,7 @@ const scenes = [
   <figcaption class="inst-foot">
     <span data-eq>θ̈ = −sin θ − 0.12 θ̇</span>
     <span class="legend" data-legend></span>
+    <a class="note-link" data-note-link href="/writing/dynamical-system-lcdm/">Read the note <span aria-hidden="true">→</span></a>
   </figcaption>
 </figure>
 
@@ -73,6 +75,9 @@ const scenes = [
   }
   .inst-head { border-bottom: 1px solid var(--line); padding: 7px 10px; }
   .inst-foot { border-top: 1px solid var(--line); flex-wrap: wrap; padding: 10px 14px; }
+  .note-link { margin-left: auto; color: var(--accent); text-decoration: none; white-space: nowrap; }
+  .note-link span { display: inline-block; transition: transform 0.2s ease; }
+  .note-link:hover span { transform: translateX(3px); }
   .live { display: inline-flex; align-items: center; gap: 6px; flex: none; }
   .live::before {
     content: "";
