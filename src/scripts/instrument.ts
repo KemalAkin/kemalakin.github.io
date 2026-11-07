@@ -27,6 +27,7 @@ export function initInstrument(root: HTMLElement): () => void {
   const eqEl = root.querySelector<HTMLElement>("[data-eq]")!;
   const legendEl = root.querySelector<HTMLElement>("[data-legend]")!;
   const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-scene]"));
+  const noteLink = root.querySelector<HTMLAnchorElement>("[data-note-link]");
 
   const reduced = prefersReducedMotion();
   let C: Colors = readColors();
@@ -303,7 +304,18 @@ export function initInstrument(root: HTMLElement): () => void {
   function switchScene(name: string) {
     if (!SCENES[name]) name = "pendulum";
     scene = SCENES[name];
-    tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.scene === name)));
+    tabs.forEach((t) => {
+      const on = t.dataset.scene === name;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      if (on) {
+        plot.setAttribute("aria-labelledby", t.id);
+        if (noteLink) {
+          noteLink.hidden = !t.dataset.note;
+          if (t.dataset.note) noteLink.href = t.dataset.note;
+        }
+      }
+    });
     overlay.hidden = !scene.overlay;
     eqEl.textContent = scene.eq;
     legendEl.innerHTML =
@@ -330,6 +342,20 @@ export function initInstrument(root: HTMLElement): () => void {
 
   const onTab = (e: Event) => switchScene((e.currentTarget as HTMLElement).dataset.scene ?? "pendulum");
   tabs.forEach((t) => t.addEventListener("click", onTab));
+  // WAI-ARIA tabs pattern: arrows / Home / End move between tabs and activate them.
+  const onKey = (e: KeyboardEvent) => {
+    const i = tabs.indexOf(e.currentTarget as HTMLButtonElement);
+    const next =
+      e.key === "ArrowRight" ? (i + 1) % tabs.length :
+      e.key === "ArrowLeft" ? (i - 1 + tabs.length) % tabs.length :
+      e.key === "Home" ? 0 :
+      e.key === "End" ? tabs.length - 1 : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    tabs[next].focus();
+    switchScene(tabs[next].dataset.scene ?? "pendulum");
+  };
+  tabs.forEach((t) => t.addEventListener("keydown", onKey));
   const onPointer = (e: PointerEvent) => {
     const r = plot.getBoundingClientRect();
     scene.tap(e.clientX - r.left, e.clientY - r.top);

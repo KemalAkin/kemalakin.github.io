@@ -1,0 +1,227 @@
+---
+// Interactive geometric Brownian motion: simulated price paths on a log axis, the terminal histogram with the
+// lognormal density, and mean / median / share-below-start readouts (simulated vs theory).
+interface Props {
+  mu?: number;
+  sigma?: number;
+}
+const { mu = 0.06, sigma = 0.38 } = Astro.props;
+---
+
+<figure class="fig" data-gbm aria-label="Interactive geometric Brownian motion">
+  <div class="fig-head">
+    <strong>Try it: 400 price paths over one year</strong>
+    <span class="legend label" style="text-transform:none;letter-spacing:0">
+      <span><i class="sw" style="background:var(--accent)"></i>ends above start</span>
+      <span><i class="sw" style="background:var(--warm)"></i>ends below</span>
+      <button class="fig-btn" type="button" data-rerun>Re-run</button>
+    </span>
+  </div>
+  <div class="controls">
+    <div class="ctrl">
+      <label><span>Drift μ</span><span data-out="mu"></span></label>
+      <input type="range" data-in="mu" min="-0.2" max="0.4" step="0.01" value={mu} aria-label="Drift mu" />
+    </div>
+    <div class="ctrl">
+      <label><span>Volatility σ</span><span data-out="sigma"></span></label>
+      <input type="range" data-in="sigma" min="0.05" max="0.9" step="0.01" value={sigma} aria-label="Volatility sigma" />
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label">Expected price</span><span class="v" data-out="mean">–</span></div>
+    <div><span class="label">Median price</span><span class="v" data-out="median">–</span></div>
+    <div><span class="label">Drag σ²/2</span><span class="v" data-out="drag">–</span></div>
+    <div><span class="label">Paths below start</span><span class="v hot" data-out="below">–</span></div>
+  </div>
+  <div class="gbm-plot">
+    <canvas role="img" aria-label="Simulated price paths and the distribution of the final price"></canvas>
+  </div>
+  <figcaption class="fig-foot" data-foot>Start price 100, 252 trading days. Same random shocks while you drag; Re-run draws new ones.</figcaption>
+</figure>
+
+<script>
+  import { fit, onThemeChange, readColors, rng, type Colors } from "../scripts/canvas";
+
+  const N = 400, STEPS = 252, T = 1, S0 = 100, BINS = 36;
+  const DT = T / STEPS;
+
+  /** Standard normal CDF (Abramowitz–Stegun 7.1.26, error < 1.5e-7). */
+  function phi(x: number): number {
+    const t = 1 / (1 + 0.3275911 * Math.abs(x) / Math.SQRT2);
+    const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-(x * x) / 2);
+    return x >= 0 ? (1 + y) / 2 : (1 - y) / 2;
+  }
+
+  function shocks(seed: number): Float64Array {
+    const r = rng(seed);
+    const z = new Float64Array(N * STEPS);
+    for (let i = 0; i < z.length; i += 2) {
+      let u = 0;
+      while (!u) u = r();
+      const v = r();
+      const m = Math.sqrt(-2 * Math.log(u));
+      z[i] = m * Math.cos(2 * Math.PI * v);
+      if (i + 1 < z.length) z[i + 1] = m * Math.sin(2 * Math.PI * v);
+    }
+    return z;
+  }
+
+  /** "Nice" price ticks inside [lo, hi] for a log axis. */
+  function ticks(lo: number, hi: number): number[] {
+    const out: number[] = [];
+    for (let k = -1; k <= 4; k++) for (const m of [1, 1.5, 2, 3, 5, 7]) {
+      const v = m * 10 ** k;
+      if (v >= lo && v <= hi) out.push(v);
+    }
+    out.sort((a, b) => a - b);
+    let t = out;
+    while (t.length > 7) t = t.filter((_, i) => i % 2 === 0);
+    return t;
+  }
+
+  function init(root: HTMLElement): () => void {
+    const canvas = root.querySelector<HTMLCanvasElement>("canvas")!;
+    const muI = root.querySelector<HTMLInputElement>('[data-in="mu"]')!;
+    const sigI = root.querySelector<HTMLInputElement>('[data-in="sigma"]')!;
+    const out = (k: string) => root.querySelector<HTMLElement>(`[data-out="${k}"]`)!;
+    let C: Colors = readColors();
+    let seed = 7;
+    let Z = shocks(seed);
+
+    function draw() {
+      const mu = +muI.value, sigma = +sigI.value;
+      const drift = (mu - (sigma * sigma) / 2) * DT, vol = sigma * Math.sqrt(DT);
+      const m = (mu - (sigma * sigma) / 2) * T, s = sigma * Math.sqrt(T);
+
+      // y range in log-price around the start: wide enough for the 0.5%–99.5% band of the final price
+      const loL = Math.min(-0.15, m - 2.8 * s), hiL = Math.max(0.15, m + 2.8 * s);
+      const { ctx, w, h } = fit(canvas);
+      ctx.clearRect(0, 0, w, h);
+      const padL = 44, padR = 10, padT = 12, padB = 26;
+      const split = Math.round((w - padL - padR) * 0.78);
+      const x0 = padL, x1 = padL + split, hx0 = x1 + 14, hx1 = w - padR;
+      const Y = (l: number) => padT + (1 - (l - loL) / (hiL - loL)) * (h - padT - padB);
+      const X = (k: number) => x0 + (k / STEPS) * (x1 - x0);
+
+      // grid + price ticks
+      ctx.font = "11px 'JetBrains Mono', monospace";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (const v of ticks(S0 * Math.exp(loL), S0 * Math.exp(hiL))) {
+        const y = Y(Math.log(v / S0));
+        ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(hx1, y); ctx.stroke();
+        ctx.fillStyle = C.muted;
+        ctx.fillText(String(v), x0 - 8, y);
+      }
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      ["0", "3 mo", "6 mo", "9 mo", "1 yr"].forEach((t, i) => ctx.fillText(t, X((i / 4) * STEPS), h - 8));
+
+      // paths
+      const hist = new Array(BINS).fill(0);
+      let below = 0;
+      ctx.lineWidth = 1;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x0, padT, x1 - x0, h - padT - padB); ctx.clip();
+      const finals = new Float64Array(N);
+      for (let i = 0; i < N; i++) {
+        let l = 0;
+        for (let k = 0; k < STEPS; k++) l += drift + vol * Z[i * STEPS + k];
+        finals[i] = l;
+      }
+      for (let i = 0; i < N; i++) {
+        const up = finals[i] >= 0;
+        if (!up) below++;
+        ctx.strokeStyle = up ? C.accent : C.warm;
+        ctx.globalAlpha = 0.11;
+        ctx.beginPath();
+        let l = 0;
+        ctx.moveTo(X(0), Y(0));
+        for (let k = 0; k < STEPS; k++) {
+          l += drift + vol * Z[i * STEPS + k];
+          if (k % 2 === 1 || k === STEPS - 1) ctx.lineTo(X(k + 1), Y(l));
+        }
+        ctx.stroke();
+        const b = Math.floor(((finals[i] - loL) / (hiL - loL)) * BINS);
+        if (b >= 0 && b < BINS) hist[b]++;
+      }
+      ctx.globalAlpha = 1;
+
+      // start level, mean and median paths (straight lines on a log axis)
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = C.muted;
+      ctx.beginPath(); ctx.moveTo(x0, Y(0)); ctx.lineTo(x1, Y(0)); ctx.stroke();
+      ctx.setLineDash([6, 5]);
+      ctx.strokeStyle = C.fg; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(STEPS), Y(mu * T)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(STEPS), Y(m)); ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = C.fg;
+      ctx.textAlign = "right";
+      const labelGap = Math.abs(Y(mu * T) - Y(m)) < 14 ? 7 : 0;
+      ctx.fillText("mean", x1 - 6, Y(mu * T) - 6 - labelGap);
+      ctx.fillText("median", x1 - 6, Y(m) + 15 + labelGap);
+
+      // terminal histogram + lognormal density (normal in log space)
+      const bh = (Y(loL) - Y(hiL)) / BINS;
+      const binW = (hiL - loL) / BINS;
+      const pdf = (l: number) => Math.exp(-((l - m) ** 2) / (2 * s * s)) / (s * Math.sqrt(2 * Math.PI));
+      const peak = Math.max(...hist, N * binW * pdf(m));
+      const HX = (c: number) => hx0 + (c / peak) * (hx1 - hx0);
+      hist.forEach((c, b) => {
+        const lMid = loL + (b + 0.5) * binW;
+        ctx.fillStyle = lMid >= 0 ? C.accent : C.warm;
+        ctx.globalAlpha = 0.55;
+        ctx.fillRect(hx0, Y(loL + (b + 1) * binW) + 0.5, HX(c) - hx0, Math.max(1, bh - 1));
+      });
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = C.fg; ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      for (let j = 0; j <= 80; j++) {
+        const l = loL + (j / 80) * (hiL - loL);
+        const x = HX(N * binW * pdf(l)), y = Y(l);
+        if (j) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+
+      // readouts
+      const fmt = (v: number) => v.toFixed(1);
+      out("mu").textContent = (mu >= 0 ? "+" : "") + (mu * 100).toFixed(0) + "% / yr";
+      out("sigma").textContent = (sigma * 100).toFixed(0) + "% / yr";
+      out("mean").textContent = fmt(S0 * Math.exp(mu * T));
+      out("median").textContent = fmt(S0 * Math.exp(m));
+      out("drag").textContent = ((sigma * sigma) / 2 * 100).toFixed(1) + "%";
+      out("below").innerHTML = `${((below / N) * 100).toFixed(0)}% <small>theory ${(phi(-m / s) * 100).toFixed(0)}%</small>`;
+    }
+
+    const rerun = () => { seed = (seed * 48271) % 2147483647; Z = shocks(seed); draw(); };
+    root.querySelector("[data-rerun]")!.addEventListener("click", rerun);
+    muI.addEventListener("input", draw);
+    sigI.addEventListener("input", draw);
+    let rt = 0;
+    const ro = new ResizeObserver(() => { clearTimeout(rt); rt = window.setTimeout(draw, 80); });
+    ro.observe(canvas);
+    const offTheme = onThemeChange(() => { C = readColors(); draw(); });
+    document.fonts?.ready.then(draw);
+    draw();
+    return () => { ro.disconnect(); offTheme(); clearTimeout(rt); };
+  }
+
+  let cleanups: (() => void)[] = [];
+  document.addEventListener("astro:page-load", () => {
+    cleanups.forEach((c) => c());
+    cleanups = Array.from(document.querySelectorAll<HTMLElement>("[data-gbm]")).map(init);
+  });
+  document.addEventListener("astro:before-swap", () => {
+    cleanups.forEach((c) => c());
+    cleanups = [];
+  });
+</script>
+
+<style>
+  .gbm-plot { position: relative; aspect-ratio: 16 / 9; min-height: 280px; }
+  .gbm-plot canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+</style>
