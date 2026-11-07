@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
+import Trajectory from "../components/Trajectory.astro";
 
 const talks = (await getCollection("talks")).sort((a, b) => +b.data.date - +a.data.date);
 const teaching = (await getCollection("teaching")).sort((a, b) => a.data.order - b.data.order);
@@ -67,14 +68,15 @@ const sections: { id: string; title: string; rows: Row[] }[] = [
 ---
 
 <Base title="CV" description="Experience, education, publications, talks and teaching of Kemal Akın.">
-  <main class="wrap">
-    <div class="page-head">
+  <main>
+    <div class="wrap page-head">
       <span class="label">Curriculum vitae</span>
       <h1>Kemal Akın</h1>
       <p>Physicist by training, data scientist and engineer by trade. Istanbul.</p>
     </div>
+    <Trajectory />
 
-    <div class="cv">
+    <div class="wrap cv">
       {sections.slice(0, 2).map((s) => (
         <section id={s.id}>
           <h2>{s.title}</h2>
@@ -136,7 +138,9 @@ const sections: { id: string; title: string; rows: Row[] }[] = [
 </Base>
 
 <style>
-  .cv { display: grid; gap: 8px; padding-top: 24px; max-width: 900px; }
+  .page-head { padding-bottom: 36px; }
+  .cv { display: grid; gap: 8px; padding-top: 8px; }
+  .cv > * { max-width: 900px; }
   section { padding-top: 32px; }
   h2 {
     margin: 0 0 12px;
