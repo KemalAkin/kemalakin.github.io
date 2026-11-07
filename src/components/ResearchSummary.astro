@@ -1,0 +1,76 @@
+---
+import { getCollection } from "astro:content";
+
+const pubs = (await getCollection("publications")).sort((a, b) => b.data.year - a.data.year);
+const talks = (await getCollection("talks")).sort((a, b) => +b.data.date - +a.data.date);
+const teaching = (await getCollection("teaching")).sort((a, b) => a.data.order - b.data.order);
+const pub = pubs[0];
+---
+
+<div class="research-grid">
+  <article class="paper">
+    <span class="label">Publication · {pub.data.year}</span>
+    <h3>{pub.data.title}</h3>
+    <p class="authors">{pub.data.authors}</p>
+    <span class="venue">{pub.data.venue}</span>
+    <div class="links">
+      {pub.data.links.filter((l) => l.href.startsWith("http")).map((l) => (
+        <a href={l.href} target="_blank" rel="noopener">{l.label} ↗</a>
+      ))}
+    </div>
+    <div class="theses">
+      <div><span class="label">M.Sc. thesis · İTÜ, 2022</span><span>Theoretical and observational aspects of inflationary cosmology</span></div>
+      <div><span class="label">B.Sc. project · İTÜ, 2019</span><span>Dynamical system analysis of quintessence models</span></div>
+    </div>
+  </article>
+  <div>
+    <div class="talks">
+      {talks.map((t) => (
+        <a class="talk" href={`/research/#talk-${t.id}`}>
+          <span class="yr">{t.data.date.getUTCFullYear()}</span>
+          <span class="t">{t.data.title}</span>
+          <span class="v">{t.data.venue}, {t.data.place}</span>
+        </a>
+      ))}
+    </div>
+    <p class="teaching">
+      <strong>Teaching</strong> at Üsküdar University: {teaching.map((t) => t.data.title.replace(/ I–II$/, "")).join(", ")}.
+    </p>
+  </div>
+</div>
+
+<style>
+  .research-grid { display: grid; gap: 28px; }
+  @media (min-width: 900px) { .research-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 40px; } }
+  .paper {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: 22px;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+  .paper h3 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 1.4rem; line-height: 1.25; text-wrap: balance; }
+  .authors { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  .venue { font-style: italic; font-family: var(--f-display); font-size: 1.05rem; }
+  .theses { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .theses div { display: grid; gap: 2px; }
+  .theses span:not(.label) { font-size: 0.95rem; }
+  .talks { display: grid; }
+  .talk {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 4px 16px;
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
+    text-decoration: none;
+  }
+  .talk:last-child { border-bottom: 1px solid var(--line); }
+  .yr { font-family: var(--f-mono); font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; padding-top: 3px; }
+  .t { font-weight: 500; line-height: 1.4; transition: color 0.15s ease; }
+  .talk:hover .t { color: var(--accent); }
+  .v { grid-column: 2; color: var(--muted); font-size: 0.9rem; }
+  .teaching { margin: 18px 0 0; color: var(--muted); font-size: 0.95rem; }
+  .teaching strong { color: var(--fg); font-weight: 500; }
+</style>

@@ -1,0 +1,25 @@
+---
+title: "Koronoloji: a COVID-19 tracker for Turkey"
+summary: Scraped daily case numbers, fitted and charted them, and posted the results to social media automatically.
+year: "2020"
+stack: [Python, Beautiful Soup, Excel, Illustrator]
+order: 5
+---
+
+import Gallery from "../../components/mdx/Gallery.astro";
+
+A personal project started during the COVID-19 outbreak. Case numbers were collected by web scraping with
+Beautiful Soup into local data sets; death and recovery rates, data fitting and visualization were done with
+Python, native Excel functions and Adobe Illustrator. Daily numbers and charts were posted to social media by
+automation scripts through their APIs.
+
+The website is no longer active; the Instagram account is still there:
+[@koronoloji_com](https://www.instagram.com/koronoloji_com/).
+
+<Gallery images={[
+  { src: "/images/koronoloji/plot1.jpg", alt: "Case curve" },
+  { src: "/images/koronoloji/chart1.jpg", alt: "Daily numbers chart" },
+  { src: "/images/koronoloji/chart2.jpg", alt: "Bar chart" },
+  { src: "/images/koronoloji/dashboard1.jpg", alt: "Dashboard" },
+  { src: "/images/koronoloji/dashboard2.jpg", alt: "Dashboard, second view" },
+]} />

@@ -1,0 +1,58 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  entry: CollectionEntry<"work">;
+}
+const { entry } = Astro.props;
+const d = entry.data;
+const meta = [d.kind, ...d.stack].filter(Boolean).slice(0, 3);
+---
+
+<a class="card" href={`/work/${entry.id}/`}>
+  <div class="thumb">
+    <canvas data-thumb={d.thumb} aria-hidden="true"></canvas>
+    {d.note && <span class="tag">interactive</span>}
+  </div>
+  <div class="card-body">
+    <h3>{d.title} <span class="arr" aria-hidden="true">↗</span></h3>
+    <p>{d.summary}</p>
+    <div class="meta">{meta.map((m) => <span>{m}</span>)}</div>
+  </div>
+</a>
+
+<style>
+  .card { display: grid; gap: 14px; text-decoration: none; min-width: 0; align-content: start; }
+  .thumb {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    max-width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(.2,.7,.2,1), border-color 0.2s ease;
+  }
+  .thumb canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .tag {
+    position: absolute; top: 10px; left: 10px;
+    font-family: var(--f-mono); font-size: 0.6875rem;
+    padding: 3px 8px; border-radius: 999px;
+    background: var(--bg); color: var(--muted); border: 1px solid var(--line);
+  }
+  .card-body { display: grid; gap: 6px; }
+  h3 {
+    margin: 0;
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: var(--step-1);
+    line-height: 1.25;
+    display: flex; align-items: baseline; gap: 8px;
+    transition: color 0.15s ease;
+  }
+  h3 .arr { font-family: var(--f-body); font-size: 1rem; color: var(--muted); transition: transform 0.2s ease, color 0.15s ease; }
+  p { margin: 0; color: var(--muted); font-size: 0.975rem; }
+  .card:hover .thumb { transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+  .card:hover h3 { color: var(--accent); }
+  .card:hover h3 .arr { transform: translate(3px, -3px); color: var(--accent); }
+</style>

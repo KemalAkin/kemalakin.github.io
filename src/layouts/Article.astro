@@ -1,0 +1,59 @@
+---
+// Long-form layout shared by notes (/writing/) and project pages (/work/).
+import Base from "./Base.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  label: string;
+  meta: string[];
+  back: { href: string; label: string };
+  next?: { href: string; label: string };
+}
+const { title, description, label, meta, back, next } = Astro.props;
+---
+
+<Base title={title} description={description} type="article">
+  <main class="post">
+    <div class="wrap">
+      <article class="post-inner">
+        <a class="back" href={back.href}>← {back.label}</a>
+        <header>
+          <span class="label">{label}</span>
+          <h1>{title}</h1>
+          <p class="lede">{description}</p>
+          {meta.length > 0 && <div class="meta">{meta.map((m) => <span>{m}</span>)}</div>}
+        </header>
+        <div class="prose">
+          <slot />
+        </div>
+        <nav class="post-nav" aria-label="More">
+          <a class="back" href={back.href}>← {back.label}</a>
+          {next && <a class="back" href={next.href}>{next.label} →</a>}
+        </nav>
+      </article>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .post { padding-block: 48px 0; }
+  .post-inner { max-width: 760px; margin-inline: auto; }
+  .back { font-family: var(--f-mono); font-size: 0.8125rem; color: var(--muted); text-decoration: none; }
+  .back:hover { color: var(--accent); }
+  header { display: grid; gap: 14px; padding: 28px 0 32px; border-bottom: 1px solid var(--line); }
+  h1 {
+    margin: 0;
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: clamp(2.1rem, 4.6vw, 3.2rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  .lede { margin: 0; max-width: 34em; color: var(--muted); font-size: 1.15rem; }
+  .post-nav {
+    margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 0.95rem;
+  }
+</style>

@@ -1,0 +1,116 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import { formatDate } from "../site";
+
+const pubs = (await getCollection("publications")).sort((a, b) => b.data.year - a.data.year);
+const talks = (await getCollection("talks")).sort((a, b) => +b.data.date - +a.data.date);
+const teaching = (await getCollection("teaching")).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base title="Research" description="Publications, theses, talks and teaching from my years in cosmology, gravitation and forensic science.">
+  <main class="wrap">
+    <div class="page-head">
+      <span class="label">Research</span>
+      <h1>Research, talks &amp; teaching</h1>
+      <p>Cosmology and gravitation from my academic years at İTÜ, and the forensic-science teaching at Üsküdar University that followed.</p>
+    </div>
+
+    <section class="block" id="publications">
+      <div class="block-head"><h2>Publications &amp; theses</h2></div>
+      <div class="stack">
+        {pubs.map((p) => (
+          <article class="item">
+            <span class="label">Journal article · {p.data.year}</span>
+            <h3>{p.data.title}</h3>
+            <p class="muted">{p.data.authors} · <em class="venue">{p.data.venue}</em></p>
+            <p>{p.data.abstract}</p>
+            <div class="links">
+              {p.data.links.map((l) => <a href={l.href} target="_blank" rel="noopener">{l.label} ↗</a>)}
+            </div>
+          </article>
+        ))}
+        <article class="item">
+          <span class="label">M.Sc. thesis · Istanbul Technical University · 2022</span>
+          <h3>Theoretical and observational aspects of inflationary cosmology</h3>
+          <div class="links"><a href="/work/inflationary-cosmology/">Project page →</a></div>
+        </article>
+        <article class="item">
+          <span class="label">B.Sc. graduation project · Istanbul Technical University · 2019</span>
+          <h3>Dynamical system analysis of quintessence models</h3>
+          <p class="muted">Advanced physics project: dynamics of dark energy.</p>
+          <div class="links"><a href="/work/quintessence/">Project page →</a></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="block" id="talks">
+      <div class="block-head">
+        <h2>Talks</h2>
+        <p>Recordings are in Turkish.</p>
+      </div>
+      <div class="stack">
+        {talks.map((t) => (
+          <article class="item" id={`talk-${t.id}`}>
+            <span class="label">{formatDate(t.data.date, { year: "numeric", month: "long" })} · {t.data.venue}, {t.data.place}</span>
+            <h3>{t.data.title}</h3>
+            <p>{t.data.summary}</p>
+            <div class="links">
+              {t.data.video && <a href={t.data.video} target="_blank" rel="noopener">Recording ↗</a>}
+              {t.data.slides && <a href={t.data.slides} target="_blank" rel="noopener">Notes (PDF) ↗</a>}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="block" id="teaching">
+      <div class="block-head">
+        <h2>Teaching</h2>
+        <p>Department of Forensic Science, Üsküdar University.</p>
+      </div>
+      <div class="stack">
+        {teaching.map((c) => (
+          <article class="item teach" id={`teaching-${c.id}`}>
+            <div>
+              <span class="label">{c.data.years} · {c.data.role}</span>
+              <h3>{c.data.title}</h3>
+              <p>{c.data.summary}</p>
+              {c.data.topics.length > 0 && (
+                <ul class="topics">{c.data.topics.map((t) => <li>{t}</li>)}</ul>
+              )}
+            </div>
+            {c.data.image && (
+              <a class="notes" href={c.data.image.src} target="_blank" rel="noopener">
+                <img src={c.data.image.src} alt={c.data.image.alt} loading="lazy" decoding="async" />
+              </a>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .block { padding-block: 48px 8px; }
+  .stack { display: grid; }
+  .item {
+    display: grid;
+    gap: 8px;
+    padding: 22px 0;
+    border-top: 1px solid var(--line);
+    scroll-margin-top: calc(var(--header-h) + 16px);
+  }
+  .item:last-child { border-bottom: 1px solid var(--line); }
+  .item:target { background: linear-gradient(90deg, var(--accent-soft), transparent 70%); }
+  .item h3 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 1.45rem; line-height: 1.25; text-wrap: balance; }
+  .item p { margin: 0; max-width: 66ch; }
+  .muted { color: var(--muted); }
+  .venue { font-family: var(--f-display); font-size: 1.05em; }
+  .topics { margin: 4px 0 0; padding-left: 1.2em; list-style: disc; color: var(--muted); font-size: 0.95rem; columns: 2 220px; column-gap: 28px; }
+  .topics li { margin: 2px 0; break-inside: avoid; }
+  .teach { grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 860px) { .teach:has(.notes) { grid-template-columns: minmax(0, 1fr) 260px; gap: 8px 32px; } }
+  .notes img { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); }
+</style>

@@ -1,0 +1,25 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import PostRow from "../../components/PostRow.astro";
+
+const posts = (await getCollection("writing", (p) => !p.data.draft)).sort((a, b) => +b.data.date - +a.data.date);
+---
+
+<Base title="Writing" description="Notes on cosmology, dynamical systems, numerical methods and markets, with equations, code and figures you can play with.">
+  <main class="wrap">
+    <div class="page-head">
+      <span class="label">Writing</span>
+      <h1>Notes</h1>
+      <p>Equations, code and figures you can play with. Also available as an <a href="/rss.xml">RSS feed</a>.</p>
+    </div>
+    <div class="posts">
+      {posts.map((p) => <PostRow entry={p} />)}
+    </div>
+  </main>
+</Base>
+
+<style>
+  .posts { display: grid; padding-top: 32px; }
+  .page-head a { color: var(--accent); text-decoration: none; }
+</style>

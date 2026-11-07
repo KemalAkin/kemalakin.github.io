@@ -1,0 +1,171 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+
+const talks = (await getCollection("talks")).sort((a, b) => +b.data.date - +a.data.date);
+const teaching = (await getCollection("teaching")).sort((a, b) => a.data.order - b.data.order);
+
+type Row = { when: string; what: string; where?: string; notes?: string[]; href?: string };
+
+const experience: Row[] = [
+  { when: "Now", what: "Data scientist & engineer", where: "Financial data, crypto markets" },
+  { when: "Dec 2022 –", what: "Research and reporting specialist", where: "A fintech company" },
+  { when: "Nov 2021 – Dec 2022", what: "Trader, self-employed", notes: ["FX, cryptocurrency, commodities and US indices in derivatives markets"] },
+  {
+    when: "Apr 2019 – Nov 2021",
+    what: "Research assistant, Department of Forensic Science",
+    where: "Faculty of Engineering and Natural Sciences, Üsküdar University, Istanbul",
+    notes: [
+      "Applied scientific principles and methods to the analysis, identification and classification of physical evidence in criminal cases",
+      "Data analysis with statistical and machine-learning techniques and computational methods",
+      "Designed and ran the physics, ballistics and questioned-documents laboratory sessions alongside the theory courses",
+      "Contributed to academic, educational and administrative work as a member of the education committee",
+    ],
+  },
+  { when: "2014 – 2016", what: "Astronomy instructor", where: "Usturlab, Istanbul", notes: ["Solar-system education for children aged 7–13"] },
+];
+
+const education: Row[] = [
+  { when: "2022", what: "M.Sc. Physics Engineering", where: "Istanbul Technical University", notes: ["Thesis: Theoretical and observational aspects of inflationary cosmology"] },
+  {
+    when: "2019",
+    what: "B.Sc. Physics Engineering",
+    where: "Istanbul Technical University",
+    notes: ["Advanced physics project: Dynamics of dark energy", "Graduation project: Dynamical system analysis of quintessence models"],
+  },
+];
+
+const activities: Row[] = [
+  { when: "2019 – 2021", what: "Member and reporter", where: "Education Committee, Üsküdar University" },
+  { when: "2019 – 2021", what: "Member", where: "Association of Forensic Science" },
+  { when: "2015 – 2018", what: "İTÜ representative; board member", where: "International Association of Physics Students (IAPS) and LC-Istanbul" },
+  { when: "2015 – 2018", what: "Founding member; president", where: "Istanbul Physics Students Society" },
+  { when: "2013 – 2016", what: "Member; vice president; president", where: "Physics Engineering Club, Istanbul Technical University" },
+  { when: "2016", what: "Member", where: "Chamber of Physics Engineers" },
+];
+
+const talkRows: Row[] = [
+  ...talks.map((t) => ({ when: String(t.data.date.getUTCFullYear()), what: t.data.title, where: `${t.data.venue}, ${t.data.place}`, href: `/research/#talk-${t.id}` })),
+  { when: "—", what: "Discrimination of pen inks: a comparative study using FTIR and VSC", where: "10th Annual Forensic Science Symposium, Global Forensic and Justice Center, Florida, US" },
+];
+
+const teachingRows: Row[] = teaching.map((c) => ({ when: c.data.years, what: c.data.title, where: `Department of Forensic Science, ${c.data.institution}`, href: `/research/#teaching-${c.id}` }));
+
+const skills = [
+  { k: "Programming", v: "Python (NumPy, SciPy, Pandas, Matplotlib, Seaborn, scikit-learn), SQL, Matlab / GNU Octave, Mathematica, LaTeX" },
+  { k: "Software", v: "Tableau, Power BI, Looker Studio, IBM SPSS, Excel, Photoshop, Illustrator / Inkscape" },
+  { k: "Languages", v: "Turkish (native), English (professional proficiency)" },
+];
+
+const sections: { id: string; title: string; rows: Row[] }[] = [
+  { id: "experience", title: "Experience", rows: experience },
+  { id: "education", title: "Education", rows: education },
+  { id: "talks", title: "Talks and presentations", rows: talkRows },
+  { id: "teaching", title: "Teaching", rows: teachingRows },
+  { id: "activities", title: "Professional and administrative activities", rows: activities },
+];
+---
+
+<Base title="CV" description="Experience, education, publications, talks and teaching of Kemal Akın.">
+  <main class="wrap">
+    <div class="page-head">
+      <span class="label">Curriculum vitae</span>
+      <h1>Kemal Akın</h1>
+      <p>Physicist by training, data scientist and engineer by trade. Istanbul.</p>
+    </div>
+
+    <div class="cv">
+      {sections.slice(0, 2).map((s) => (
+        <section id={s.id}>
+          <h2>{s.title}</h2>
+          <ol>
+            {s.rows.map((r) => (
+              <li>
+                <span class="when">{r.when}</span>
+                <div>
+                  <span class="what">{r.href ? <a href={r.href}>{r.what}</a> : r.what}</span>
+                  {r.where && <span class="where">{r.where}</span>}
+                  {r.notes && <ul>{r.notes.map((n) => <li>{n}</li>)}</ul>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+
+      <section id="publications">
+        <h2>Publications</h2>
+        <ol>
+          <li>
+            <span class="when">2020</span>
+            <div>
+              <span class="what"><a href="/research/#publications">Formalizing slow-roll inflation in scalar-tensor theories of gravitation</a></span>
+              <span class="where">Akın, K., Arapoğlu, A. S., Yükselci, A. E. · <em>Physics of the Dark Universe</em></span>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      {sections.slice(2).map((s) => (
+        <section id={s.id}>
+          <h2>{s.title}</h2>
+          <ol>
+            {s.rows.map((r) => (
+              <li>
+                <span class="when">{r.when}</span>
+                <div>
+                  <span class="what">{r.href ? <a href={r.href}>{r.what}</a> : r.what}</span>
+                  {r.where && <span class="where">{r.where}</span>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+
+      <section id="skills">
+        <h2>Skills</h2>
+        <dl>
+          {skills.map((s) => (
+            <div><dt class="label">{s.k}</dt><dd>{s.v}</dd></div>
+          ))}
+        </dl>
+      </section>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .cv { display: grid; gap: 8px; padding-top: 24px; max-width: 900px; }
+  section { padding-top: 32px; }
+  h2 {
+    margin: 0 0 12px;
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: var(--step-2);
+    letter-spacing: -0.01em;
+  }
+  ol { list-style: none; margin: 0; padding: 0; }
+  ol > li {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px 24px;
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
+  }
+  @media (min-width: 680px) { ol > li { grid-template-columns: 170px minmax(0, 1fr); } }
+  ol > li:last-child { border-bottom: 1px solid var(--line); }
+  .when { font-family: var(--f-mono); font-size: 0.8125rem; color: var(--muted); padding-top: 3px; font-variant-numeric: tabular-nums; }
+  .what { display: block; font-weight: 500; line-height: 1.4; }
+  .what a { text-decoration: none; }
+  .what a:hover { color: var(--accent); }
+  .where { display: block; color: var(--muted); font-size: 0.95rem; }
+  ul { margin: 6px 0 0; padding-left: 1.1em; list-style: disc; color: var(--muted); font-size: 0.95rem; }
+  ul li { margin: 3px 0; }
+  dl { margin: 0; display: grid; gap: 0; }
+  dl > div { display: grid; gap: 4px 24px; padding: 14px 0; border-top: 1px solid var(--line); }
+  @media (min-width: 680px) { dl > div { grid-template-columns: 170px minmax(0, 1fr); } }
+  dl > div:last-child { border-bottom: 1px solid var(--line); }
+  dt { padding-top: 3px; }
+  dd { margin: 0; }
+</style>

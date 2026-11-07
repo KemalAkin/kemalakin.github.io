@@ -1,0 +1,17 @@
+---
+title: Market data toolkit
+summary: Candlestick data from exchange APIs, indicators such as RSI and MACD, and charts delivered through a Telegram bot.
+stack: [Pandas, Plotly, APIs]
+featured: true
+thumb: candles
+order: 4
+---
+
+import Figure from "../../components/mdx/Figure.astro";
+
+Technical analysis of stock and crypto markets. The toolkit pulls candlestick data through exchange APIs,
+works on it with Pandas and technical-analysis libraries, and plots candlestick charts overlaid with indicators
+(RSI, MACD, moving averages) using Matplotlib, Seaborn and Plotly. The same charts are available on request
+through a Telegram bot.
+
+<Figure src="/images/technical-analysis/btc-daily.png" alt="BTC/USDT daily candlestick chart with indicators" caption="BTC/USDT daily chart with indicators." />

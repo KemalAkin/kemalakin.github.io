@@ -1,0 +1,22 @@
+---
+// An image with an optional caption. Images live under public/ at their legacy paths.
+interface Props {
+  src: string;
+  alt: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+}
+const { src, alt, caption, width, height } = Astro.props;
+---
+
+<figure class="figure">
+  <img src={src} alt={alt} loading="lazy" decoding="async" width={width} height={height} />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .figure { margin: 20px 0 28px; display: grid; gap: 10px; }
+  .figure img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+  figcaption { font-family: var(--f-mono); font-size: 0.8125rem; color: var(--muted); }
+</style>

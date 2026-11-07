@@ -1,0 +1,29 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import Article from "../../layouts/Article.astro";
+import { formatDate, readingTime } from "../../site";
+
+export async function getStaticPaths() {
+  const posts = (await getCollection("writing", (p) => !p.data.draft)).sort((a, b) => +b.data.date - +a.data.date);
+  return posts.map((post, i) => ({ params: { slug: post.id }, props: { post, older: posts[i + 1] } }));
+}
+
+interface Props {
+  post: CollectionEntry<"writing">;
+  older?: CollectionEntry<"writing">;
+}
+const { post, older } = Astro.props;
+const { Content } = await render(post);
+const d = post.data;
+---
+
+<Article
+  title={d.title}
+  description={d.description}
+  label={`Note · ${d.topic}`}
+  meta={[formatDate(d.date), readingTime(post.body), ...d.tags]}
+  back={{ href: "/writing/", label: "All writing" }}
+  next={older ? { href: `/writing/${older.id}/`, label: older.data.title } : undefined}
+>
+  <Content />
+</Article>

@@ -1,0 +1,55 @@
+---
+import Instrument from "./Instrument.astro";
+
+interface Props {
+  latestHref: string;
+}
+const { latestHref } = Astro.props;
+---
+
+<section class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div class="hero-text">
+      <span class="label">Physicist · Data scientist · Istanbul</span>
+      <h1>I model systems that evolve. First the early universe, now <em>financial markets</em>.</h1>
+      <p class="lede">
+        Physicist by training, data scientist and engineer by trade. I build the pipelines and analyses behind
+        financial data, and I still write about cosmology, dynamical systems and the mathematics underneath both.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href={latestHref}>Read the latest note <span class="arr" aria-hidden="true">→</span></a>
+        <a class="btn" href="#work">Selected work</a>
+      </div>
+    </div>
+    <Instrument />
+  </div>
+</section>
+
+<style>
+  .hero { padding-block: 56px 40px; }
+  .hero-grid { display: grid; gap: 40px; align-items: center; }
+  @media (min-width: 920px) {
+    .hero { padding-block: 88px 64px; }
+    .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 56px; }
+  }
+  .hero-text { min-width: 0; display: grid; gap: 22px; }
+  h1 {
+    margin: 0;
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: var(--step-4);
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .lede { margin: 0; max-width: 34em; color: var(--muted); font-size: 1.125rem; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 4px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-text > * { animation: rise 0.7s cubic-bezier(.2,.7,.2,1) both; }
+    .hero-text > *:nth-child(2) { animation-delay: 0.06s; }
+    .hero-text > *:nth-child(3) { animation-delay: 0.12s; }
+    .hero-text > *:nth-child(4) { animation-delay: 0.18s; }
+  }
+  @keyframes rise { from { opacity: 0.35; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+</style>

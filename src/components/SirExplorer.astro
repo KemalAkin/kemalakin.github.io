@@ -1,0 +1,174 @@
+---
+// Interactive SIR figure for MDX posts: two sliders, four readouts and an SVG chart with hover.
+interface Props {
+  beta?: number;
+  gamma?: number;
+}
+const { beta = 0.32, gamma = 0.1 } = Astro.props;
+---
+
+<figure class="fig" data-sir aria-label="Interactive SIR model">
+  <div class="fig-head">
+    <strong>Try it: an outbreak in 160 days</strong>
+    <span class="legend label" style="text-transform:none;letter-spacing:0">
+      <span><i class="sw" style="background:var(--muted)"></i>S</span>
+      <span><i class="sw" style="background:var(--warm)"></i>I</span>
+      <span><i class="sw" style="background:var(--accent)"></i>R</span>
+    </span>
+  </div>
+  <div class="controls">
+    <div class="ctrl">
+      <label><span>Transmission rate β</span><span data-out="beta"></span></label>
+      <input type="range" data-in="beta" min="0.05" max="0.8" step="0.01" value={beta} aria-label="Transmission rate beta" />
+    </div>
+    <div class="ctrl">
+      <label><span>Recovery rate γ</span><span data-out="gamma"></span></label>
+      <input type="range" data-in="gamma" min="0.04" max="0.5" step="0.01" value={gamma} aria-label="Recovery rate gamma" />
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label">R₀ = β / γ</span><span class="v" data-out="r0">–</span></div>
+    <div><span class="label">Peak infected</span><span class="v hot" data-out="peak">–</span></div>
+    <div><span class="label">Peak day</span><span class="v" data-out="peakday">–</span></div>
+    <div><span class="label">Ever infected</span><span class="v" data-out="final">–</span></div>
+  </div>
+  <div class="chart-wrap">
+    <svg class="chart" viewBox="0 0 680 300" role="img" aria-label="S, I and R shares over 160 days"></svg>
+  </div>
+  <figcaption class="fig-foot">Computed in your browser with RK4, step 0.25 days, starting from 0.1% infected.</figcaption>
+</figure>
+
+<script>
+  import { simulateSIR, type SirRow } from "../scripts/sir";
+
+  const VW = 680, VH = 300, M = { l: 44, r: 70, t: 18, b: 34 };
+  const sx = (d: number) => M.l + (d / 160) * (VW - M.l - M.r);
+  const sy = (v: number) => M.t + (1 - v) * (VH - M.t - M.b);
+
+  function init(root: HTMLElement) {
+    const svg = root.querySelector<SVGSVGElement>("svg.chart")!;
+    const betaI = root.querySelector<HTMLInputElement>('[data-in="beta"]')!;
+    const gammaI = root.querySelector<HTMLInputElement>('[data-in="gamma"]')!;
+    const out = (k: string) => root.querySelector<HTMLElement>(`[data-out="${k}"]`)!;
+    let data: SirRow[] = [];
+    const pathOf = (idx: 0 | 1 | 2) =>
+      data.map((r, k) => `${k ? "L" : "M"}${sx(k).toFixed(1)},${sy(r[idx]).toFixed(1)}`).join("");
+
+    function draw() {
+      const beta = +betaI.value, gamma = +gammaI.value;
+      data = simulateSIR(beta, gamma);
+      let pk = 0;
+      data.forEach((r, k) => { if (r[1] > data[pk][1]) pk = k; });
+      const last = data[160];
+      out("beta").textContent = beta.toFixed(2) + " / day";
+      out("gamma").textContent = gamma.toFixed(2) + " / day";
+      out("r0").textContent = (beta / gamma).toFixed(2);
+      out("peak").textContent = (data[pk][1] * 100).toFixed(1) + "%";
+      out("peakday").textContent = pk === 0 ? "—" : String(pk);
+      out("final").textContent = ((1 - last[0]) * 100).toFixed(1) + "%";
+
+      let g = '<g class="grid">';
+      [0, 0.25, 0.5, 0.75, 1].forEach((v) => {
+        g += `<line x1="${M.l}" x2="${VW - M.r}" y1="${sy(v)}" y2="${sy(v)}"/><text class="tick-l" x="${M.l - 8}" y="${sy(v) + 4}" text-anchor="end">${v * 100}%</text>`;
+      });
+      [0, 40, 80, 120, 160].forEach((d) => {
+        g += `<text class="tick-l" x="${sx(d)}" y="${VH - M.b + 18}" text-anchor="middle">${d === 160 ? "160 days" : d}</text>`;
+      });
+      g += "</g>";
+      const area = pathOf(1) + `L${sx(160)},${sy(0)}L${sx(0)},${sy(0)}Z`;
+      const labels: [number, string, string, number][] = [[last[0], "S", "end-s", 0], [last[2], "R", "end-r", 0]];
+      if (Math.abs(sy(last[0]) - sy(last[2])) < 14) { labels[0][3] = -8; labels[1][3] = 8; }
+      const lbl = labels
+        .map(([v, n, c, off]) => `<text class="end-l ${c}" x="${sx(160) + 8}" y="${sy(v) + 4 + off}">${n} ${(v * 100).toFixed(0)}%</text>`)
+        .join("");
+      const peakTxtX = sx(pk) + (pk > 110 ? -10 : 10), anchor = pk > 110 ? "end" : "start";
+      const peak = pk > 0
+        ? `<circle class="peak" cx="${sx(pk)}" cy="${sy(data[pk][1])}" r="5"/><text class="end-l end-i" x="${peakTxtX}" y="${sy(data[pk][1]) - 10}" text-anchor="${anchor}">I peak ${(data[pk][1] * 100).toFixed(1)}% · day ${pk}</text>`
+        : "";
+      svg.innerHTML =
+        g +
+        `<path class="area-i" d="${area}"/>` +
+        `<path class="ln ln-s" d="${pathOf(0)}"/><path class="ln ln-r" d="${pathOf(2)}"/><path class="ln ln-i" d="${pathOf(1)}"/>` +
+        lbl + peak +
+        `<g data-hov visibility="hidden"><line class="hover-line" data-hov-l y1="${M.t}" y2="${VH - M.b}"/><rect class="tip-bg" data-hov-bg rx="6" width="132" height="70"/><text class="tip-t" data-hov-t></text></g>` +
+        `<rect x="${M.l}" y="${M.t}" width="${VW - M.l - M.r}" height="${VH - M.t - M.b}" fill="transparent"/>`;
+    }
+
+    function hover(e: PointerEvent) {
+      const hov = svg.querySelector("[data-hov]");
+      const ctm = svg.getScreenCTM();
+      if (!hov || !ctm) return;
+      const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
+      const d = Math.max(0, Math.min(160, Math.round(((p.x - M.l) / (VW - M.l - M.r)) * 160)));
+      const r = data[d], x = sx(d);
+      hov.setAttribute("visibility", "visible");
+      const l = svg.querySelector("[data-hov-l]")!;
+      l.setAttribute("x1", String(x)); l.setAttribute("x2", String(x));
+      const bx = d > 95 ? x - 142 : x + 10, by = M.t + 6;
+      const bg = svg.querySelector("[data-hov-bg]")!;
+      bg.setAttribute("x", String(bx)); bg.setAttribute("y", String(by));
+      svg.querySelector("[data-hov-t]")!.innerHTML = [`day ${d}`, `S ${(r[0] * 100).toFixed(1)}%`, `I ${(r[1] * 100).toFixed(1)}%`, `R ${(r[2] * 100).toFixed(1)}%`]
+        .map((s, k) => `<tspan x="${bx + 10}" y="${by + 17 + k * 15}">${s}</tspan>`)
+        .join("");
+    }
+
+    svg.addEventListener("pointermove", hover);
+    svg.addEventListener("pointerdown", hover);
+    svg.addEventListener("pointerleave", () => svg.querySelector("[data-hov]")?.setAttribute("visibility", "hidden"));
+    betaI.addEventListener("input", draw);
+    gammaI.addEventListener("input", draw);
+    draw();
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    document.querySelectorAll<HTMLElement>("[data-sir]").forEach(init);
+  });
+</script>
+
+<style>
+  .fig {
+    margin: 20px 0 28px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+    max-width: none;
+  }
+  .fig-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .fig-head strong { font-weight: 600; font-size: 0.95rem; }
+  .controls { display: grid; gap: 14px 24px; padding: 16px; border-bottom: 1px solid var(--line); }
+  @media (min-width: 620px) { .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .ctrl { display: grid; gap: 6px; min-width: 0; }
+  .ctrl label { display: flex; justify-content: space-between; gap: 8px; font-size: 0.9rem; }
+  .ctrl label span:last-child { font-family: var(--f-mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .readouts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  @media (min-width: 620px) { .readouts { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .readouts > div { background: var(--surface); padding: 12px 16px; display: grid; gap: 2px; }
+  .readouts .v { font-family: var(--f-mono); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .readouts .v.hot { color: var(--warm); }
+  .chart-wrap { padding: 8px 8px 4px; overflow-x: auto; }
+  .chart { display: block; width: 100%; min-width: 480px; height: auto; touch-action: pan-y; }
+  .chart :global(.grid line) { stroke: var(--line); }
+  .chart :global(.tick-l) { fill: var(--muted); font-family: var(--f-mono); font-size: 11px; }
+  .chart :global(.ln) { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart :global(.ln-s) { stroke: var(--muted); }
+  .chart :global(.ln-i) { stroke: var(--warm); stroke-width: 2.6; }
+  .chart :global(.ln-r) { stroke: var(--accent); }
+  .chart :global(.area-i) { fill: var(--warm); fill-opacity: 0.13; }
+  .chart :global(.end-l) { font-family: var(--f-mono); font-size: 11.5px; }
+  .chart :global(.end-s) { fill: var(--muted); }
+  .chart :global(.end-r) { fill: var(--accent); }
+  .chart :global(.end-i) { fill: var(--warm); }
+  .chart :global(.peak) { fill: var(--warm); stroke: var(--surface); stroke-width: 2; }
+  .chart :global(.hover-line) { stroke: var(--fg); stroke-opacity: 0.35; stroke-dasharray: 3 3; }
+  .chart :global(.tip-bg) { fill: var(--bg); stroke: var(--line); }
+  .chart :global(.tip-t) { font-family: var(--f-mono); font-size: 11px; fill: var(--fg); }
+  .fig-foot { padding: 10px 16px; font-size: 0.8125rem; color: var(--muted); font-family: var(--f-mono); }
+</style>

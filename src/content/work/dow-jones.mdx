@@ -1,0 +1,27 @@
+---
+title: Exploring the Dow Jones
+summary: Scraped and cleaned company data into a SQLite database, then built interactive dashboards in Power BI and Tableau.
+stack: [Python, SQLite, Power BI, Tableau]
+order: 6
+---
+
+import Figure from "../../components/mdx/Figure.astro";
+import Embed from "../../components/mdx/Embed.astro";
+
+The *Dow Jones Industrial Average* is a stock market index of 30 prominent companies listed on US exchanges. In
+this project I collect data on the companies in the index by web scraping (Pandas and Yahoo Finance), clean it
+and build a database with Python. Interactive dashboards on top of it are built in Microsoft Power BI and
+Tableau.
+
+<Figure src="/images/dow-jones/dj_pBI.gif" alt="Power BI dashboard of the Dow Jones companies" caption="Power BI dashboard." />
+
+<Embed src="https://public.tableau.com/views/MSFTStockPrices/MicrosoftStockPrices?:language=en-US&:display_count=n&:origin=viz_share_link&:showVizHome=no&:embed=true" title="Microsoft stock prices, Tableau dashboard" ratio="4 / 3" />
+
+A few rows and columns of the resulting company table:
+
+| | zip | sector | fullTimeEmployees | city | state | country | website |
+|---|---|---|---|---|---|---|---|
+| 1 | 10285 | Financial Services | 64000 | New York | NY | United States | americanexpress.com |
+| 2 | 91320-1799 | Healthcare | 24200 | Thousand Oaks | CA | United States | amgen.com |
+| 3 | 95014 | Technology | 154000 | Cupertino | CA | United States | apple.com |
+| 4 | 60606-1596 | Industrials | 142000 | Chicago | IL | United States | boeing.com |

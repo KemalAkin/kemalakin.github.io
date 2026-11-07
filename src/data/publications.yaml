@@ -1,0 +1,20 @@
+- id: formalizing-sr
+  title: Formalizing slow-roll inflation in scalar-tensor theories of gravitation
+  authors: Akın, K., Arapoğlu, A. S., Yükselci, A. E.
+  venue: Physics of the Dark Universe
+  year: 2020
+  abstract: >-
+    The viability of the slow-roll approximation is examined through the structure of phase spaces in
+    scalar-tensor theories of gravitation, using a scalar field nonminimally coupled to the spacetime
+    curvature as the example. The slow-roll field equations are obtained in the Jordan frame in two ways:
+    by directly generalizing the minimal-coupling slow-roll conditions, and by conformally transforming the
+    Einstein-frame slow-roll equations to the Jordan frame before applying the generalized conditions. The
+    two methods are compared for the potentials V(φ) ∝ φ² and V(φ) ∝ φ⁴ through their n_s and r values in
+    the light of recent observational data.
+  links:
+    - label: Journal version
+      href: https://www.sciencedirect.com/science/article/abs/pii/S2212686420303228
+    - label: Preprint (PDF)
+      href: /files/[Akın2020]FormalizingSRinSTT.pdf
+    - label: Google Scholar
+      href: https://scholar.google.com/citations?user=Pq0UrfQAAAAJ

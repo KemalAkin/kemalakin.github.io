@@ -1,0 +1,71 @@
+---
+title: Solving the SIR model from scratch
+description: Three coupled equations explain why an outbreak peaks and then burns out. Below they are derived, integrated and put on sliders.
+date: 2022-04-03
+topic: Computational epidemiology
+tags: [Numerical methods, SciPy]
+interactive: true
+---
+
+import SirExplorer from "../../components/SirExplorer.astro";
+import Callout from "../../components/mdx/Callout.astro";
+
+## The model
+
+Split a population into the susceptible $S$, the infectious $I$ and the recovered $R$. Infections happen when
+susceptible and infectious people meet, at a rate $\beta$ per day, and the infectious recover at a rate
+$\gamma$. Working in shares of the population (so $S + I + R = 1$) gives
+
+$$
+\begin{aligned}
+\frac{dS}{dt} &= -\beta S I \\[1.2ex]
+\frac{dI}{dt} &= \beta S I - \gamma I \\[1.2ex]
+\frac{dR}{dt} &= \gamma I
+\end{aligned}
+$$
+
+<Callout label="Counts or shares">
+With head counts instead of shares the infection term is $\beta S I / N$, where $N = S + I + R$ is the
+population size. Dividing every equation by $N$ gives the form above.
+</Callout>
+
+The second equation already holds the main result. $I$ grows only while $\beta S > \gamma$, that is while
+$R_0 S > 1$ with the basic reproduction number $R_0 = \beta / \gamma$. Every infection uses up susceptibles,
+so $S$ falls until the condition fails and the curve turns over.
+
+<SirExplorer />
+
+## Integrating it
+
+There is no closed-form solution for $I(t)$, so we integrate numerically. SciPy's `solve_ivp` does it in a few
+lines. The figure above uses a hand-written fourth-order Runge–Kutta step instead, which is the same idea in
+about fifteen lines of JavaScript.
+
+```python title="sir.py"
+import numpy as np
+from scipy.integrate import solve_ivp
+
+def sir(t, y, beta, gamma):
+    s, i, r = y                     # shares of the population
+    return [-beta * s * i, beta * s * i - gamma * i, gamma * i]
+
+beta, gamma = 0.32, 0.10            # per day
+y0 = [0.999, 0.001, 0.0]
+t = np.linspace(0, 160, 641)
+
+sol = solve_ivp(sir, (0, 160), y0, args=(beta, gamma), t_eval=t)
+s, i, r = sol.y
+print(f"R0 = {beta / gamma:.2f}, peak on day {t[i.argmax()]:.0f}")
+```
+
+## How big does it get?
+
+Divide the first equation by the third and integrate. With almost everyone susceptible at the start, the share
+that is still susceptible at the end, $s_\infty$, solves
+
+$$
+s_\infty = \exp\!\big(-R_0\,(1 - s_\infty)\big)
+$$
+
+For $R_0 = 3.2$ that leaves about 5% untouched, so roughly 95% are infected at some point. Drag $\gamma$ up
+until $R_0$ drops below 1 and the outbreak never takes off.

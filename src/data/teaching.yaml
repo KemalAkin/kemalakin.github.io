@@ -1,0 +1,71 @@
+# Üsküdar University, Department of Forensic Science.
+- id: forensic-physics
+  title: Forensic Physics I–II
+  role: Teaching assistant
+  institution: Üsküdar University
+  years: 2019–2021
+  order: 1
+  summary: >-
+    Freshman physics (Physics 101 and 102) reworked around forensic applications. I ran all laboratory
+    sessions and part of the theory classes, wrote exam and homework questions and graded them. When the
+    course moved online during the pandemic I built my own simulations in Python and Excel for the forensic
+    examples.
+  topics:
+    - Physics and measurement
+    - Vectors; motion in one and three dimensions
+    - Work, energy and momentum
+    - Conservation laws and the ballistic pendulum
+    - Harmonic motion and the simple pendulum
+    - Introduction to ballistics
+    - Reconstruction of traffic accidents
+    - Bloodstain pattern analysis
+    - The electromagnetic spectrum and optics
+
+- id: mathematics
+  title: Mathematics I–II
+  role: Lecturer, single-variable calculus
+  institution: Üsküdar University
+  years: 2020–2021
+  order: 2
+  summary: A lecture series on single-variable calculus.
+  topics:
+    - Functions
+    - Derivatives
+    - Integrals
+
+- id: csi
+  title: Crime Scene Investigation
+  role: Teaching assistant; lecture series on bloodstain pattern analysis
+  institution: Üsküdar University
+  years: 2020–2021
+  order: 3
+  summary: >-
+    In this committee course I gave the lecture series on bloodstain pattern analysis and was teaching
+    assistant for the whole course.
+  topics:
+    - Formation and classification of bloodstains
+    - Impact angle and direction
+    - Area of convergence and origin
+    - Computer-aided analysis
+    - "Python simulation: a bloodstain against impact angle"
+  image:
+    src: /images/bpa_notes.jpg
+    alt: Lecture notes on bloodstain pattern analysis
+
+- id: criminalistics
+  title: Criminalistics
+  role: Lecture series on questioned documents
+  institution: Üsküdar University
+  years: 2020–2021
+  order: 4
+  summary: >-
+    In this committee course I gave the lecture series on questioned-document examination with a video
+    spectral comparator (VSC).
+  topics:
+    - The electromagnetic spectrum
+    - Hidden and visible security features
+    - Alternative light sources and filters
+    - The video spectral comparator
+  image:
+    src: /images/qdocs_notes.jpg
+    alt: Lecture notes on questioned-document examination

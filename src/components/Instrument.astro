@@ -1,0 +1,138 @@
+---
+// Hero instrument: four live scenes (tabs) on one canvas. Logic lives in src/scripts/instrument.ts.
+const scenes = [
+  { id: "pendulum", label: "Pendulum" },
+  { id: "hubble", label: "Hubble flow" },
+  { id: "monte", label: "Monte Carlo" },
+  { id: "lorenz", label: "Lorenz" },
+];
+---
+
+<figure class="instrument" data-instrument>
+  <div class="inst-head">
+    <div class="scene-tabs" role="tablist" aria-label="Hero animation">
+      {scenes.map((s, i) => (
+        <button class="scene-tab" type="button" role="tab" data-scene={s.id} aria-selected={i === 0 ? "true" : "false"}>{s.label}</button>
+      ))}
+    </div>
+    <span class="live">live</span>
+  </div>
+  <div class="plot">
+    <canvas aria-label="Animated figure. Tap to interact." role="img"></canvas>
+    <div class="overlay" data-overlay>
+      <div class="axis-x"></div>
+      <div class="axis-y"></div>
+      <span class="tick" style="left:25%">−π</span>
+      <span class="tick" style="left:75%">π</span>
+      <span class="fp stable" style="left:50%"></span>
+      <span class="fp saddle" style="left:25%"></span>
+      <span class="fp saddle" style="left:75%"></span>
+      <span class="axis-name" style="right:12px;top:calc(50% - 26px)">θ</span>
+      <span class="axis-name" style="left:calc(50% + 8px);top:8px">θ̇</span>
+    </div>
+  </div>
+  <figcaption class="inst-foot">
+    <span data-eq>θ̈ = −sin θ − 0.12 θ̇</span>
+    <span class="legend" data-legend></span>
+  </figcaption>
+</figure>
+
+<script>
+  import { initInstrument } from "../scripts/instrument";
+
+  let cleanup: (() => void) | null = null;
+  document.addEventListener("astro:page-load", () => {
+    cleanup?.();
+    cleanup = null;
+    const el = document.querySelector<HTMLElement>("[data-instrument]");
+    if (el) cleanup = initInstrument(el);
+  });
+  document.addEventListener("astro:before-swap", () => {
+    cleanup?.();
+    cleanup = null;
+  });
+</script>
+
+<style>
+  .instrument {
+    margin: 0;
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .inst-head, .inst-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--f-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .inst-head { border-bottom: 1px solid var(--line); padding: 7px 10px; }
+  .inst-foot { border-top: 1px solid var(--line); flex-wrap: wrap; padding: 10px 14px; }
+  .live { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+  .live::before {
+    content: "";
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--warm);
+    box-shadow: 0 0 0 3px var(--warm-soft);
+  }
+  .plot {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    max-width: 100%;
+    touch-action: manipulation;
+    cursor: crosshair;
+  }
+  .plot canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .overlay { position: absolute; inset: 0; pointer-events: none; }
+  .scene-tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .scene-tabs::-webkit-scrollbar { display: none; }
+  .scene-tab {
+    font-family: var(--f-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    padding: 5px 10px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .scene-tab:hover { color: var(--fg); }
+  .scene-tab[aria-selected="true"] { color: var(--fg); background: var(--accent-soft); }
+  .axis-x, .axis-y { position: absolute; background: var(--line); pointer-events: none; }
+  .axis-x { left: 0; right: 0; top: 50%; height: 1px; }
+  .axis-y { top: 0; bottom: 0; left: 50%; width: 1px; }
+  .tick {
+    position: absolute;
+    font-family: var(--f-mono);
+    font-size: 0.6875rem;
+    color: var(--muted);
+    pointer-events: none;
+    transform: translate(-50%, 6px);
+    top: 50%;
+  }
+  .fp {
+    position: absolute;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    pointer-events: none;
+  }
+  .fp.stable { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .fp.saddle { border: 1.5px solid var(--warm); background: var(--surface); }
+  .axis-name {
+    position: absolute;
+    font-family: var(--f-display);
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--muted);
+    pointer-events: none;
+  }
+</style>

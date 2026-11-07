@@ -1,0 +1,28 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import Article from "../../layouts/Article.astro";
+
+export async function getStaticPaths() {
+  const work = (await getCollection("work")).sort((a, b) => a.data.order - b.data.order);
+  return work.map((entry, i) => ({ params: { slug: entry.id }, props: { entry, next: work[i + 1] } }));
+}
+
+interface Props {
+  entry: CollectionEntry<"work">;
+  next?: CollectionEntry<"work">;
+}
+const { entry, next } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+---
+
+<Article
+  title={d.title}
+  description={d.summary}
+  label={["Project", d.kind, d.year].filter(Boolean).join(" · ")}
+  meta={d.stack}
+  back={{ href: "/#work", label: "All work" }}
+  next={next ? { href: `/work/${next.id}/`, label: next.data.title } : undefined}
+>
+  <Content />
+</Article>

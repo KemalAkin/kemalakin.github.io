@@ -1,0 +1,34 @@
+---
+title: Spread of infectious disease
+summary: The SIR model solved with SciPy and a hand-written RK4, with stability read off symbolically in SymPy.
+stack: [Python, SciPy, SymPy, Matplotlib]
+featured: true
+thumb: sir
+order: 1
+note: sir-model
+---
+
+import Figure from "../../components/mdx/Figure.astro";
+
+The SIR (susceptible, infectious, recovered) model is derived analytically and its coupled differential
+equations are solved both with SciPy's integrators and with a manual fourth-order Runge–Kutta implementation.
+The stability of the disease-free and endemic states is determined symbolically with SymPy, and the evolution of
+the disease through a population is visualized with Matplotlib.
+
+$$
+\begin{aligned}
+\frac{dS}{dt} &= -\frac{\beta}{N} S I \\[1ex]
+\frac{dI}{dt} &= \frac{\beta}{N} S I - \gamma I \\[1ex]
+\frac{dR}{dt} &= \gamma I
+\end{aligned}
+$$
+
+Here $\beta$ is the infection rate, $\gamma$ the recovery rate and $N = S + I + R$ the population size. The
+[interactive note](/writing/sir-model/) puts $\beta$ and $\gamma$ on sliders.
+
+<Figure src="/images/koronoloji/sir-model.jpeg" alt="Numerical solution of the SIR model" caption="Numerical solution of the SIR model." />
+
+In the same manner, a model for the spread of HIV infection inside the body is built and compared with publicly
+available data from an academic journal.
+
+<Figure src="/images/koronoloji/sir-hiv-model.png" alt="Numerical solution of an HIV infection model" caption="HIV infection model, numerical solution." />

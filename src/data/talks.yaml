@@ -1,0 +1,47 @@
+# Talks and lectures. Recordings are in Turkish.
+- id: inflationary-cosmology
+  title: Inflationary cosmology in scalar-tensor theories of gravitation
+  venue: 18. Fizik Haftası
+  place: Istanbul Technical University
+  date: 2021-02-19
+  language: Turkish
+  summary: >-
+    Two parts. First a short tour of FRW cosmology and scalar-field models as an alternative to dark energy;
+    then the analysis of inflationary models within general relativity and in alternative theories of
+    gravitation, with the numerical techniques and tools used to carry it out.
+  video: https://www.youtube.com/watch?v=qY57ptmequE
+  slides: /files/[Akın2021]FizikHaftasi_STCosmology_2.pdf
+
+- id: mendeley
+  title: Bibliography management with Mendeley
+  venue: Distance learning series
+  place: Üsküdar University
+  date: 2020-06-06
+  language: Turkish
+  summary: >-
+    A short lecture in a public distance-learning series: how Mendeley organizes source files and how to
+    build a bibliography in Word from it.
+  video: https://www.youtube.com/watch?v=sk9UYmUwfB4
+
+- id: introduction-cosmology
+  title: "Cosmology: fundamental observations and cosmic dynamics"
+  venue: 14. Fizik Haftası
+  place: Istanbul Technical University
+  date: 2016-07-08
+  language: Turkish
+  summary: >-
+    An introduction to cosmology. The dynamics of the universe are built up from general relativity and
+    first principles, the evolution is derived for different energy and matter contents, and the present
+    state of the universe is discussed against the latest observations.
+  video: https://www.youtube.com/watch?v=jf2ufe3by9U
+
+- id: document-latex
+  title: Document preparation with LaTeX
+  venue: 12. Fizik Haftası
+  place: Boğaziçi University
+  date: 2015-07-01
+  language: Turkish
+  summary: >-
+    A one-hour introduction to markup languages and to LaTeX, the typesetting system built for technical
+    and scientific documents, ending with a live walk-through of a first document in TeXMaker on Linux.
+  video: https://www.youtube.com/watch?v=7xDRiVObuF4

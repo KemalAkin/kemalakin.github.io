@@ -1,0 +1,80 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import Hero from "../components/Hero.astro";
+import Trajectory from "../components/Trajectory.astro";
+import WorkCard from "../components/WorkCard.astro";
+import PostRow from "../components/PostRow.astro";
+import ResearchSummary from "../components/ResearchSummary.astro";
+import ThumbsInit from "../components/ThumbsInit.astro";
+
+const work = (await getCollection("work")).sort((a, b) => a.data.order - b.data.order);
+const featured = work.filter((w) => w.data.featured);
+const more = work.filter((w) => !w.data.featured);
+const posts = (await getCollection("writing", (p) => !p.data.draft)).sort((a, b) => +b.data.date - +a.data.date);
+const latest = posts.find((p) => p.data.interactive) ?? posts[0];
+---
+
+<Base>
+  <main>
+    <Hero latestHref={`/writing/${latest.id}/`} />
+    <Trajectory />
+
+    <section class="block wrap" id="work">
+      <div class="block-head">
+        <h2>Selected work</h2>
+        <p>Models, tools and dashboards. Each project page carries its own figures, and some of them run in the browser.</p>
+      </div>
+      <div class="work-grid">
+        {featured.map((w) => <WorkCard entry={w} />)}
+      </div>
+      <div class="more">
+        <span class="label">More projects</span>
+        <ul>
+          {more.map((w) => (
+            <li>
+              <a href={`/work/${w.id}/`}>
+                <span class="mt">{w.data.title}</span>
+                <span class="ms">{w.data.summary}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <section class="block wrap" id="research">
+      <div class="block-head">
+        <h2>Research &amp; talks</h2>
+        <p>Cosmology and gravitation from my academic years, plus the talks and courses that came with them. <a href="/research/">All of it →</a></p>
+      </div>
+      <ResearchSummary />
+    </section>
+
+    <section class="block wrap" id="writing">
+      <div class="block-head">
+        <h2>Writing</h2>
+        <p>Notes with equations, code and figures you can play with.</p>
+      </div>
+      <div class="posts">
+        {posts.slice(0, 5).map((p) => <PostRow entry={p} />)}
+      </div>
+    </section>
+  </main>
+  <ThumbsInit />
+</Base>
+
+<style>
+  .work-grid { display: grid; gap: 36px 28px; }
+  @media (min-width: 760px) { .work-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .more { margin-top: 48px; display: grid; gap: 12px; }
+  .more ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0 28px; }
+  @media (min-width: 760px) { .more ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .more li { border-top: 1px solid var(--line); }
+  .more a { display: grid; gap: 2px; padding: 12px 0; text-decoration: none; }
+  .mt { font-weight: 500; transition: color 0.15s ease; }
+  .ms { color: var(--muted); font-size: 0.9rem; }
+  .more a:hover .mt { color: var(--accent); }
+  .block-head p a { color: var(--accent); text-decoration: none; white-space: nowrap; }
+  .posts { display: grid; }
+</style>

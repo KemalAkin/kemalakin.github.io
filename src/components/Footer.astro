@@ -1,0 +1,25 @@
+---
+import { SITE, SOCIAL } from "../site";
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="links">
+      {SOCIAL.map((s) => <a href={s.href} target="_blank" rel="noopener">{s.label}</a>)}
+      <a href="/rss.xml">RSS</a>
+    </div>
+    <small>© {year} {SITE.name} · built with Astro</small>
+  </div>
+</footer>
+
+<style>
+  .site-footer { margin-top: 72px; border-top: 1px solid var(--line); background: var(--surface); }
+  .site-footer .wrap {
+    padding-block: 32px max(40px, env(safe-area-inset-bottom, 0px));
+    display: flex; flex-wrap: wrap; gap: 16px 32px; justify-content: space-between; align-items: baseline;
+  }
+  .site-footer .links a { color: var(--fg); border-bottom-color: var(--line); }
+  .site-footer small { color: var(--muted); font-family: var(--f-mono); font-size: 0.75rem; }
+</style>

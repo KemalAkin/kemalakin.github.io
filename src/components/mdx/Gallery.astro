@@ -1,0 +1,26 @@
+---
+// A responsive grid of images; each opens full size in a new tab.
+interface Props {
+  images: { src: string; alt: string }[];
+}
+const { images } = Astro.props;
+---
+
+<div class="gallery">
+  {images.map((im) => (
+    <a href={im.src} target="_blank" rel="noopener">
+      <img src={im.src} alt={im.alt} loading="lazy" decoding="async" />
+    </a>
+  ))}
+</div>
+
+<style>
+  .gallery { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); margin: 20px 0 28px; max-width: none; }
+  .gallery a { border: 0; display: block; }
+  .gallery img {
+    width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
+    border-radius: 10px; border: 1px solid var(--line); background: var(--surface);
+    transition: transform 0.3s cubic-bezier(.2,.7,.2,1);
+  }
+  .gallery a:hover img { transform: translateY(-3px); }
+</style>

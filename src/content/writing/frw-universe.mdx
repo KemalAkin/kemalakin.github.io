@@ -1,0 +1,28 @@
+---
+title: FRW universe models
+description: How the scale factor evolves for different matter and energy contents, and why the age of the universe needs a numerical integral.
+date: 2021-04-04
+topic: Cosmology
+tags: [Friedmann equations, Numerical integration]
+---
+
+import Embed from "../../components/mdx/Embed.astro";
+
+In a homogeneous and isotropic universe the evolution of the scale factor $a(t)$ is governed by the Friedmann
+equation. With the present-day density parameters of radiation, matter, curvature and the cosmological
+constant it reads
+
+$$
+H^2(a) = \left(\frac{\dot a}{a}\right)^2 = H_0^2 \left( \Omega_{\mathrm{r}}\, a^{-4} + \Omega_{\mathrm{m}}\, a^{-3} + \Omega_k\, a^{-2} + \Omega_\Lambda \right),
+$$
+
+and the age of the universe follows from integrating $dt = da / (a H)$ from the Big Bang to today:
+
+$$
+t_0 = \int_0^1 \frac{da}{a\,H(a)}.
+$$
+
+For a general mix of components the age integral cannot be evaluated analytically, so one has to use
+numerical methods. The video below walks through the resulting universe models.
+
+<Embed youtube="1ApCBAW2MzY" title="FRW universe models" />

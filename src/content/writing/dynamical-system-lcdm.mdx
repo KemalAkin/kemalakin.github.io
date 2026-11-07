@@ -1,0 +1,35 @@
+---
+title: Dynamical system analysis of ΛCDM
+description: The matter, radiation and dark-energy densities of ΛCDM as a dynamical system, reduced to two dimensions with the constraint equation.
+date: 2022-04-04
+topic: Cosmology
+tags: [Stability analysis, Phase space]
+---
+
+import Figure from "../../components/mdx/Figure.astro";
+
+$\Lambda\mathrm{CDM}$ is the simplest model that is broadly consistent with the observations. Written in terms
+of the density parameters of matter, radiation and the cosmological constant, the system is
+
+$$
+\begin{aligned}
+\Omega'_{\mathrm{m}} &= \Omega_{\mathrm{m}}\,(\Omega_{\mathrm{r}} - 3\Omega_\Lambda) \\[1ex]
+\Omega'_{\mathrm{r}} &= \Omega_{\mathrm{r}}\,(\Omega_{\mathrm{r}} - 3\Omega_\Lambda - 1) \\[1ex]
+\Omega'_\Lambda &= \Omega_\Lambda\,(\Omega_{\mathrm{r}} - 3\Omega_\Lambda + 3)
+\end{aligned}
+$$
+
+The constraint equation $\Omega_{\mathrm{m}} + \Omega_{\mathrm{r}} + \Omega_\Lambda = 1$ removes one of the
+three. Eliminating $\Omega_\Lambda$ reduces the system to two dimensions:
+
+$$
+\begin{aligned}
+\Omega'_{\mathrm{m}} &= \Omega_{\mathrm{m}}\,(3\Omega_{\mathrm{m}} + 4\Omega_{\mathrm{r}} - 3) \\[1ex]
+\Omega'_{\mathrm{r}} &= \Omega_{\mathrm{r}}\,(3\Omega_{\mathrm{m}} + 4\Omega_{\mathrm{r}} - 4)
+\end{aligned}
+$$
+
+Its phase portrait shows the familiar history: trajectories leave the radiation-dominated point, pass close to
+matter domination and end on the de Sitter point where $\Omega_\Lambda = 1$.
+
+<Figure src="/images/dsa-lcdm/mrl-2d.png" alt="Phase space of the matter, radiation and Lambda model" caption="Phase space of the reduced matter–radiation–Λ system." />

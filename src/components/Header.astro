@@ -1,0 +1,105 @@
+---
+import { NAV, SITE } from "../site";
+
+const path = Astro.url.pathname;
+---
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label={`${SITE.name}, home`}>
+      <span class="brand-name">{SITE.name}</span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      {NAV.map((n) => (
+        <a href={n.href} aria-current={path.startsWith(n.match) ? "page" : undefined}>{n.label}</a>
+      ))}
+    </nav>
+    <button class="theme-btn" type="button" data-theme-toggle aria-label="Switch light or dark theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"></path></svg>
+    </button>
+  </div>
+</header>
+
+<script>
+  const isDark = () => {
+    const t = document.documentElement.getAttribute("data-theme");
+    return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  };
+  document.addEventListener("astro:page-load", () => {
+    document.querySelector("[data-theme-toggle]")?.addEventListener("click", () => {
+      const next = isDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("theme", next); } catch {}
+    });
+  });
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--line);
+    padding-top: env(safe-area-inset-top, 0px);
+    view-transition-name: site-header;
+  }
+  .site-header .wrap { display: flex; align-items: center; gap: 16px; height: var(--header-h); }
+  .brand { display: flex; align-items: baseline; gap: 10px; text-decoration: none; white-space: nowrap; }
+  .brand-name { font-family: var(--f-display); font-size: 1.3rem; font-weight: 500; letter-spacing: -0.01em; }
+  .nav {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    min-width: 0;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a {
+    position: relative;
+    padding: 6px 10px;
+    font-size: 0.9375rem;
+    color: var(--muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+  }
+  .nav a::after {
+    content: "";
+    position: absolute;
+    left: 10px; right: 10px; bottom: 2px;
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s ease;
+  }
+  .nav a:hover { color: var(--fg); }
+  .nav a:hover::after, .nav a[aria-current="page"]::after { transform: scaleX(1); }
+  .nav a[aria-current="page"] { color: var(--fg); }
+  .theme-btn {
+    flex: none;
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--fg);
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .theme-btn:hover { background: var(--accent-soft); }
+  .theme-btn svg { width: 17px; height: 17px; }
+  @media (max-width: 520px) {
+    .site-header .wrap { gap: 6px; }
+    .brand-name { font-size: 1.12rem; }
+    .nav { gap: 0; }
+    .nav a { padding: 6px 5px; font-size: 0.8125rem; }
+    .nav a::after { left: 5px; right: 5px; }
+    .theme-btn { width: 32px; height: 32px; }
+  }
+</style>

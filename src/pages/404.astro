@@ -1,0 +1,22 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Not found" description="This page does not exist.">
+  <main class="wrap">
+    <div class="page-head">
+      <span class="label">404</span>
+      <h1>This trajectory left the phase space.</h1>
+      <p>The page you were looking for does not exist, or it moved when the site was rebuilt.</p>
+      <div class="cta">
+        <a class="btn primary" href="/">Home <span class="arr" aria-hidden="true">→</span></a>
+        <a class="btn" href="/writing/">Writing</a>
+        <a class="btn" href="/research/">Research</a>
+      </div>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 12px; }
+</style>

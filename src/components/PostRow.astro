@@ -1,0 +1,44 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { formatDate } from "../site";
+
+interface Props {
+  entry: CollectionEntry<"writing">;
+}
+const { entry } = Astro.props;
+const d = entry.data;
+---
+
+<a class="post-row" href={`/writing/${entry.id}/`}>
+  <span class="d">{formatDate(d.date, { year: "numeric" })}</span>
+  <span class="ttl">{d.title}</span>
+  {d.interactive && <span class="badge on">interactive</span>}
+  <span class="sub">{[d.topic, ...d.tags.slice(0, 2)].join(" · ")}</span>
+</a>
+
+<style>
+  .post-row {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 4px 20px;
+    padding: 18px 0;
+    border-top: 1px solid var(--line);
+    text-decoration: none;
+    align-items: baseline;
+  }
+  .post-row:last-child { border-bottom: 1px solid var(--line); }
+  @media (min-width: 760px) { .post-row { grid-template-columns: 88px minmax(0, 1fr) auto; } }
+  .d { font-family: var(--f-mono); font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ttl { font-family: var(--f-display); font-size: 1.3rem; line-height: 1.3; transition: color 0.15s ease; }
+  .sub { grid-column: 2; color: var(--muted); font-size: 0.9rem; }
+  .badge {
+    grid-column: 2;
+    justify-self: start;
+    font-family: var(--f-mono); font-size: 0.6875rem;
+    padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted);
+  }
+  @media (min-width: 760px) { .badge { grid-column: 3; grid-row: 1; justify-self: end; } }
+  .badge.on { color: var(--warm); border-color: color-mix(in srgb, var(--warm) 45%, transparent); background: var(--warm-soft); }
+  .post-row:hover .ttl { color: var(--accent); }
+</style>
