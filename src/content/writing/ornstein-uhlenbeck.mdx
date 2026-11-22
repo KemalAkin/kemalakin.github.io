@@ -1,0 +1,175 @@
+---
+title: Mean reversion, and how to find it where there is none
+description: "The Ornstein–Uhlenbeck process began as a model of a Brownian particle slowed by friction. In finance it describes spreads that snap back, and its standard estimator finds that behavior in pure random walks."
+date: 2026-11-07
+topic: Quantitative finance
+tags: [Stochastic calculus, Statistics]
+interactive: true
+slug: ornstein-uhlenbeck
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import OuExplorer from "../../components/OuExplorer.astro";
+
+{/*
+  Numbers from a NumPy check: 20,000 simulated random walks of 253 daily points; θ = 5 case the same way;
+  frequency check with 8 observations a day. Rerun if a parameter changes.
+*/}
+
+A random walk has no memory of where it has been. Many things in markets do: the gap between two closely related
+prices, an interest rate, the premium of a perpetual future over spot. They wander, but they get pulled back. The
+standard model for that pull came from physics, and it has a trap built into how it is usually estimated.
+
+## A particle with friction
+
+In 1908 Langevin wrote down Newton's law for a small particle in a fluid: a viscous friction force proportional
+to its velocity plus an irregular force from the molecules around it [1]. Uhlenbeck and Ornstein worked out the
+statistics of its solution in 1930 [2]. Written for a
+quantity $X$ that is pulled toward a level $m$, the equation is
+
+$$
+dX = -\theta\,(X - m)\,dt + \sigma\,dW .
+$$
+
+The first term is the friction: the further $X$ is from $m$, the harder it is pushed back, at rate $\theta$.
+The second is the same Brownian noise as in geometric Brownian motion. The solution is a Gaussian process with
+
+$$
+\mathbb{E}[X_t] = m + (X_0 - m)\,e^{-\theta t}, \qquad
+\operatorname{Var}[X_\infty] = \frac{\sigma^2}{2\theta}, \qquad
+\operatorname{Corr}(X_t, X_{t+\tau}) = e^{-\theta \tau}.
+$$
+
+Deviations decay exponentially, so the natural summary is the **half-life** $\ln 2 / \theta$: how long it takes,
+on average, for a gap to close halfway. Noise and friction balance at a stationary spread $\sigma/\sqrt{2\theta}$,
+the same balance that sets a Brownian particle's thermal velocity (the fluctuation–dissipation relation).
+
+## Where it shows up in markets
+
+- **Spreads between related assets.** Two assets driven by the same thing can drift apart, but not for long.
+  The spread is modeled as OU; a trade opens when it is a couple of stationary standard deviations wide.
+- **Interest rates.** Vasicek's 1977 short-rate model is exactly this equation [3].
+- **Futures basis and funding.** A perpetual future is tied to spot by a funding payment that pushes the
+  premium back toward zero. The premium behaves like a spring with noise.
+
+## Estimating it
+
+Sampled every $\Delta$, the OU process is exactly an autoregression:
+
+$$
+X_{t+\Delta} = m + b\,(X_t - m) + \varepsilon_t, \qquad b = e^{-\theta\Delta},
+\qquad \operatorname{Var}[\varepsilon] = \frac{\sigma^2}{2\theta}\left(1 - e^{-2\theta\Delta}\right).
+$$
+
+So the usual recipe is: regress $X_{t+\Delta}$ on $X_t$, read off the slope $\hat b$, and set
+$\hat\theta = -\ln \hat b / \Delta$. It is short, it is in every tutorial, and on a year of daily data it lies.
+
+## The trap
+
+Feed the recipe a **pure random walk** ($\theta = 0$, no pull at all), one year of daily points, and repeat
+20,000 times:
+
+- 96% of the samples give a slope $\hat b < 1$, i.e. "mean reversion";
+- the median implied half-life is **40 trading days**;
+- 85% of samples report a half-life under six months, short enough to look tradeable.
+
+When there *is* reversion the estimate is still too fast. With a true $\theta = 5$ per year (half-life 35
+trading days), the median estimate is a half-life of 20 days.
+
+This is a known small-sample bias of the autoregression slope, studied since Hurwicz [4] and worked out to first
+order by Kendall and by Marriott and Pope [5, 6], and it is the reason unit-root tests such as Dickey–Fuller need
+their own critical values [7]. With the mean estimated from the sample, the first-order bias is
+$\mathbb{E}[\hat b - b] \approx -(1 + 3b)/n$, which puts the spurious speed of a random walk at about
+$4/T$ per year for $T$ years of data. That matches the simulation, and it contains the uncomfortable part:
+
+<Callout label="Sampling faster does not help">
+The bias in $\hat\theta$ depends on the time span $T$, not on the number of points. One year of daily data
+and one year of data eight times a day give the same spurious speed (median about 4.3 per year in both runs).
+Four years of daily data bring it down to about 1.1. Mean reversion is learned from how many half-lives you
+have watched, not from how finely you watched them.
+</Callout>
+
+<OuExplorer />
+
+## The trap on real prices
+
+The "ETH/BTC" tab runs the same recipe on the ratio of two crypto prices, Binance perpetual daily closes from
+September 2021 to October 2026. Over those five years the ratio fell from 0.078 to 0.029: whatever it is, it
+did not revert. An augmented Dickey–Fuller test on the full series agrees ($p = 0.69$, no evidence of mean
+reversion), and the full-sample fit gives a half-life of 524 days.
+
+Now fit one-year windows, as a trader looking at "the last year" would. Across 101 windows, 15 days apart, the
+median fitted half-life is **60 days**, and 89% of windows report a half-life under six months. The augmented
+Dickey–Fuller test rejects a random walk in only 3% of the same windows. The regression finds a spring almost
+every time; the test almost never does.
+
+## What to do instead
+
+1. **Test before you fit.** Run an augmented Dickey–Fuller test (or a cointegration test for a pair) with its
+   proper critical values, not a regression $t$-statistic read against a normal table.
+2. **Count half-lives, not rows.** Ask how many times the estimated half-life fits in the sample. Fewer than
+   about ten and the estimate is mostly bias.
+3. **Correct or simulate.** Add the first-order correction back to $\hat b$, or calibrate by simulating the
+   fitted model and re-estimating it many times; the spread of those estimates is your real error bar.
+4. **Hold out time.** Fit on one period and check that the spread actually reverts in the next one.
+
+## Code
+
+```python title="ou_bias.py"
+import numpy as np
+
+def simulate_ou(theta, sigma, n, dt, reps, rng):
+    b = np.exp(-theta * dt) if theta > 0 else 1.0
+    sd = sigma * np.sqrt((1 - b**2) / (2 * theta)) if theta > 0 else sigma * np.sqrt(dt)
+    x = np.zeros((reps, n))
+    shocks = rng.standard_normal((reps, n)) * sd
+    for t in range(1, n):
+        x[:, t] = b * x[:, t - 1] + shocks[:, t]
+    return x
+
+def fitted_theta(x, dt):
+    x0 = x[:, :-1] - x[:, :-1].mean(axis=1, keepdims=True)
+    x1 = x[:, 1:] - x[:, 1:].mean(axis=1, keepdims=True)
+    b = (x0 * x1).sum(axis=1) / (x0**2).sum(axis=1)
+    return -np.log(np.clip(b, 1e-9, 1 - 1e-12)) / dt
+
+rng = np.random.default_rng(3)
+dt = 1 / 252
+theta_hat = fitted_theta(simulate_ou(0.0, 1.0, 253, dt, 20_000, rng), dt)
+half_life_days = np.log(2) / theta_hat * 252
+print(f"random walk: median half-life {np.median(half_life_days):.0f} days, "
+      f"{(half_life_days < 126).mean():.0%} under six months")
+```
+
+## Takeaway
+
+The Ornstein–Uhlenbeck process is the simplest honest model of something that gets pulled back, and its
+parameters have physical meaning: a spring constant and a temperature. The hard part is not the model but the
+speed of the spring. Estimate it on a short window and you will find a spring even in a random walk.
+
+## Data
+
+Binance Data Collection, USDⓈ-M futures daily klines (ETHUSDT, BTCUSDT), [data.binance.vision](https://data.binance.vision/).
+
+## References
+
+1. P. Langevin, "Sur la théorie du mouvement brownien," *Comptes Rendus de l'Académie des Sciences (Paris)* 146,
+   530–533 (1908). English translation: D. S. Lemons and A. Gythiel, *American Journal of Physics* 65(11),
+   1079–1081 (1997), [doi:10.1119/1.18725](https://doi.org/10.1119/1.18725)
+2. G. E. Uhlenbeck and L. S. Ornstein, "On the theory of the Brownian motion," *Physical Review* 36(5), 823–841
+   (1930). [doi:10.1103/PhysRev.36.823](https://doi.org/10.1103/PhysRev.36.823)
+3. O. Vasicek, "An equilibrium characterization of the term structure," *Journal of Financial Economics* 5(2),
+   177–188 (1977). [doi:10.1016/0304-405X(77)90016-2](https://doi.org/10.1016/0304-405X(77)90016-2)
+4. L. Hurwicz, "Least-squares bias in time series," in T. C. Koopmans (ed.), *Statistical Inference in Dynamic
+   Economic Models*, Cowles Commission Monograph 10, Wiley, 365–383 (1950).
+5. M. G. Kendall, "Note on bias in the estimation of autocorrelation," *Biometrika* 41(3/4), 403–404 (1954).
+   [doi:10.1093/biomet/41.3-4.403](https://doi.org/10.1093/biomet/41.3-4.403)
+6. F. H. C. Marriott and J. A. Pope, "Bias in the estimation of autocorrelations," *Biometrika* 41(3/4), 390–402
+   (1954). [doi:10.1093/biomet/41.3-4.390](https://doi.org/10.1093/biomet/41.3-4.390)
+7. D. A. Dickey and W. A. Fuller, "Distribution of the estimators for autoregressive time series with a unit
+   root," *Journal of the American Statistical Association* 74(366), 427–431 (1979).
+   [doi:10.1080/01621459.1979.10482531](https://doi.org/10.1080/01621459.1979.10482531)
+
+{/* Verified on 2026-11-07 (Crossref, zbMATH, translations). The (1+3ρ)/n formula is credited to Kendall (1954)
+    and Marriott & Pope (1954) jointly by secondary sources; both originals are paywalled. Hurwicz pages from a
+    Cowles Foundation paper. ADF and rolling-window numbers: statsmodels adfuller (constant, AIC lag choice). */}

@@ -1,0 +1,140 @@
+---
+title: Where the volatility smile comes from
+description: "Black–Scholes prices every strike with one volatility; markets don't. Let the variance itself wander and correlate with the price, as Heston did, and the smile appears, with one parameter for its tilt and one for its curve."
+date: 2026-11-07
+topic: Quantitative finance
+tags: [Options, Stochastic volatility]
+slug: heston-smile
+interactive: true
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import HestonExplorer from "../../components/HestonExplorer.astro";
+
+{/*
+  Numbers: semi-closed-form prices (numerical integration of the characteristic function, the "little trap"
+  form) inverted to implied volatility; cross-checked by Monte Carlo (full-truncation Euler, 400,000 paths,
+  1,000 steps). Spot 100, T = 0.25, r = 0, v0 = θ = 0.36, κ = 2, ξ = 1 unless stated.
+*/}
+
+The [heat-equation note](/writing/black-scholes-heat-equation/) priced an option with one number for volatility.
+Ask the market for that number by inverting its option prices, and you get a different answer at every strike:
+plotted against strike, implied volatility bends into a smile or slopes into a skew. A constant $\sigma$ cannot
+produce that. The [GARCH note](/writing/volatility-clustering/) already showed volatility is not constant; the
+Heston model [1] makes it random in continuous time and keeps option prices computable.
+
+## The model
+
+Price and variance each follow their own diffusion, and the two noises are correlated:
+
+$$
+\begin{aligned}
+dS &= \mu S\,dt + \sqrt{v}\, S\, dW_1, \\[1ex]
+dv &= \kappa(\theta - v)\,dt + \xi \sqrt{v}\, dW_2, \qquad d\langle W_1, W_2\rangle = \rho\, dt .
+\end{aligned}
+$$
+
+The variance is pulled toward a long-run level $\theta$ at speed $\kappa$, like the
+[Ornstein–Uhlenbeck](/writing/ornstein-uhlenbeck/) process, but its noise shrinks as $\sqrt v$, so it cannot go
+far below zero. If $2\kappa\theta \ge \xi^2$, known as the Feller condition after Feller's study of this
+diffusion [2], it never reaches zero at all. This is the square-root process of the Cox–Ingersoll–Ross
+interest-rate model [3], borrowed for variance.
+
+## What each parameter does to the smile
+
+Three-month options, spot 100, current and long-run volatility both 60%, $\kappa = 2$, $\xi = 1$. Implied
+volatility by strike:
+
+| Strike | 70 | 80 | 90 | 100 | 110 | 120 | 130 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| $\rho = -0.7$ | 66.3 | 63.2 | 60.4 | 57.7 | 55.3 | 53.0 | 51.1 |
+| $\rho = 0$ | 60.5 | 59.5 | 58.9 | 58.8 | 58.9 | 59.3 | 59.7 |
+| $\rho = +0.3$ | 57.2 | 57.5 | 58.2 | 59.3 | 60.4 | 61.6 | 62.7 |
+| $\rho = -0.7$, $\xi = 0.3$ | 62.2 | 61.2 | 60.3 | 59.6 | 58.8 | 58.2 | 57.6 |
+
+**Correlation $\rho$ tilts it.** With $\rho < 0$, falls in price come with rises in volatility, which fattens the
+left tail of the return distribution; low strikes become expensive and the curve slopes down. Flip the sign and
+the skew flips.
+
+**Vol of vol $\xi$ bends it.** It sets how much the variance moves and so how fat both tails are. Cut it from 1
+to 0.3 and the same correlation gives a skew less than half as steep.
+
+**The level sits below 60%.** Even with $\rho = 0$, at-the-money volatility is 58.8%, not 60%. Implied
+volatility near the money tracks the average of $\sqrt v$, and by Jensen's inequality that is below
+$\sqrt{\mathbb{E}[v]}$.
+
+<HestonExplorer />
+
+## Pricing without a closed form
+
+Heston's contribution was computability. The characteristic function of $\ln S_T$ is known in closed form, and a
+call price is two one-dimensional Fourier integrals of it:
+
+$$
+C = S\,P_1 - K e^{-rT} P_2, \qquad
+P_j = \frac12 + \frac1\pi \int_0^\infty \operatorname{Re}\!\left[\frac{e^{-iu\ln K}\, f_j(u)}{iu}\right] du .
+$$
+
+The textbook form of $f_j$ has a branch-cut problem: the complex logarithm inside it can jump, and the integral
+silently returns a wrong price for long maturities. The rearranged form used here and in the figure is proven
+stable by Albrecher, Mayer, Schoutens and Tistaert [4].
+
+<Callout label="A Monte Carlo cross-check, and a trap">
+A simple Euler simulation of the variance, with negative values truncated to zero in both the drift and the noise
+("full truncation" [5]), priced the 90-strike call at
+$17.16 \pm 0.05$ with 250 time steps. The Fourier price is $17.08$: the simulation is biased, by almost two standard
+errors. With 1,000 steps it gives $17.07 \pm 0.03$. The bias comes from discretizing a process that lives near
+zero, and it is why Heston simulation has its own literature of better schemes [6].
+</Callout>
+
+```python title="heston.py"
+import numpy as np
+from scipy.integrate import quad
+
+def char_fn(u, S, T, r, v0, kappa, theta, xi, rho):
+    """Characteristic function of ln S_T, in the form that avoids the branch cut."""
+    b = kappa - rho * xi * 1j * u
+    d = np.sqrt(b**2 + xi**2 * (1j * u + u**2))
+    g = (b - d) / (b + d)
+    e = np.exp(-d * T)
+    C = r * 1j * u * T + kappa * theta / xi**2 * ((b - d) * T - 2 * np.log((1 - g * e) / (1 - g)))
+    D = (b - d) / xi**2 * (1 - e) / (1 - g * e)
+    return np.exp(C + D * v0 + 1j * u * np.log(S))
+
+def heston_call(S, K, T, r, *params):
+    phi = lambda u: char_fn(u, S, T, r, *params)
+    forward = phi(-1j)                           # E[S_T] = S e^{rT}
+    p1 = quad(lambda u: (np.exp(-1j * u * np.log(K)) * phi(u - 1j) / (1j * u * forward)).real, 1e-8, 200, limit=400)[0]
+    p2 = quad(lambda u: (np.exp(-1j * u * np.log(K)) * phi(u) / (1j * u)).real, 1e-8, 200, limit=400)[0]
+    return S * (0.5 + p1 / np.pi) - K * np.exp(-r * T) * (0.5 + p2 / np.pi)
+
+print(heston_call(100, 90, 0.25, 0.0, 0.36, 2.0, 0.36, 1.0, -0.7))   # about 17.08
+```
+
+## What Heston gets right and wrong
+
+It produces skew and smile from two interpretable parameters and prices vanillas fast enough to calibrate. It
+struggles with very short maturities, where real smiles are steeper than a diffusion for variance can make them;
+that gap is one reason for adding jumps and for newer models of the variance. As a first model of why the smile
+exists, it is the right one; Gatheral's book [7] is a practitioner's tour of it and its extensions.
+
+## References
+
+1. S. L. Heston, "A closed-form solution for options with stochastic volatility with applications to bond and
+   currency options," *Review of Financial Studies* 6(2), 327–343 (1993). [doi:10.1093/rfs/6.2.327](https://doi.org/10.1093/rfs/6.2.327)
+2. W. Feller, "Two singular diffusion problems," *Annals of Mathematics* 54(1), 173–182 (1951).
+   [doi:10.2307/1969318](https://doi.org/10.2307/1969318)
+3. J. C. Cox, J. E. Ingersoll and S. A. Ross, "A theory of the term structure of interest rates," *Econometrica*
+   53(2), 385–407 (1985). [doi:10.2307/1911242](https://doi.org/10.2307/1911242)
+4. H. Albrecher, P. Mayer, W. Schoutens and J. Tistaert, "The little Heston trap," *Wilmott Magazine*, January
+   2007, 83–92.
+5. R. Lord, R. Koekkoek and D. van Dijk, "A comparison of biased simulation schemes for stochastic volatility
+   models," *Quantitative Finance* 10(2), 177–194 (2010). [doi:10.1080/14697680802392496](https://doi.org/10.1080/14697680802392496)
+6. L. Andersen, "Simple and efficient simulation of the Heston stochastic volatility model," *Journal of
+   Computational Finance* 11(3), 1–42 (2008). [doi:10.21314/JCF.2008.189](https://doi.org/10.21314/JCF.2008.189)
+7. J. Gatheral, *The Volatility Surface: A Practitioner's Guide*, Wiley (2006). ISBN 978-0-471-79251-2.
+
+{/* Verified on 2026-11-07 (Crossref, publisher pages, preprints). Feller (1951) is the standard citation for the
+    square-root diffusion and its zero boundary; the 2κθ ≥ ξ² notation is the later finance convention, so the text
+    says "known as". Albrecher et al. prove the stability of a form used earlier by others; no DOI, pages from
+    secondary records. */}

@@ -1,0 +1,188 @@
+---
+// Interactive Ornstein–Uhlenbeck estimation bias: simulated paths and the distribution of fitted half-lives,
+// or the ETH/BTC price ratio with half-lives fitted on rolling one-year windows.
+---
+
+<figure class="fig" data-ou aria-label="Interactive mean-reversion estimation">
+  <div class="fig-head">
+    <strong>Try it: fit a half-life</strong>
+    <span class="seg" data-seg role="group" aria-label="Data">
+      <button type="button" data-mode="sim" aria-pressed="true">Simulated</button>
+      <button type="button" data-mode="real" aria-pressed="false">ETH/BTC</button>
+    </span>
+  </div>
+  <div class="controls" data-show="sim">
+    <div class="ctrl">
+      <label><span>True speed θ</span><span data-out="theta"></span></label>
+      <input type="range" data-in="theta" min="0" max="20" step="0.5" value="0" aria-label="Mean-reversion speed theta" />
+    </div>
+    <div class="ctrl">
+      <label><span>Sample length</span><span data-out="years"></span></label>
+      <input type="range" data-in="years" min="0.25" max="5" step="0.25" value="1" aria-label="Sample length in years" />
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label" data-out="r1l">True half-life</span><span class="v" data-out="r1">–</span></div>
+    <div><span class="label" data-out="r2l">Median fitted</span><span class="v hot" data-out="r2">–</span></div>
+    <div><span class="label" data-out="r3l">Fits under 6 months</span><span class="v" data-out="r3">–</span></div>
+    <div><span class="label" data-out="r4l">Slope below 1</span><span class="v" data-out="r4">–</span></div>
+  </div>
+  <div class="plot"><canvas role="img" aria-label="A series and the half-lives fitted to it"></canvas></div>
+  <figcaption class="fig-foot" data-foot></figcaption>
+</figure>
+
+<script>
+  import { $in, $out, axes, fit, label, line, mount, normals, segmented, type Box, type Colors } from "../scripts/figure";
+  import eth from "../data/notes/ethbtc-daily.json";
+
+  const M = 500, MAXN = 5 * 252 + 1, DT = 1 / 252;
+
+  /** Mean-adjusted AR(1) slope of x[a..b). */
+  function slope(x: ArrayLike<number>, a: number, b: number): number {
+    let m0 = 0, m1 = 0;
+    const n = b - a - 1;
+    for (let i = a; i < b - 1; i++) { m0 += x[i]; m1 += x[i + 1]; }
+    m0 /= n; m1 /= n;
+    let sxy = 0, sxx = 0;
+    for (let i = a; i < b - 1; i++) { const d = x[i] - m0; sxy += d * (x[i + 1] - m1); sxx += d * d; }
+    return sxy / sxx;
+  }
+  /** Half-life in steps from a slope; Infinity when the slope says no reversion. */
+  const halfLife = (b: number) => (b > 0 && b < 1 ? Math.log(2) / -Math.log(b) : Infinity);
+
+  function median(a: number[]): number {
+    const s = [...a].sort((x, y) => x - y);
+    return s[Math.floor(s.length / 2)];
+  }
+  const days = (d: number) => (isFinite(d) ? (d >= 1000 ? (d / 365).toFixed(1) + " yr" : Math.round(d) + " d") : "none");
+
+  /** Histogram of log10 half-lives with the true value marked. */
+  function histogram(ctx: CanvasRenderingContext2D, C: Colors, b: Box, hl: number[], truth: number, unit: string) {
+    const lo = 0, hi = Math.log10(3000), BINS = 34;
+    const counts = new Array(BINS).fill(0);
+    let inf = 0;
+    for (const d of hl) {
+      if (!isFinite(d) || d > 3000) { inf++; continue; }
+      const k = Math.min(BINS - 1, Math.max(0, Math.floor(((Math.log10(Math.max(1, d)) - lo) / (hi - lo)) * BINS)));
+      counts[k]++;
+    }
+    const peak = Math.max(...counts, 1);
+    const A = axes(ctx, C, b, { lo, hi, ticks: [0, 1, Math.log10(30), 2, Math.log10(365), 3], fmt: (v) => days(10 ** v), label: `fitted half-life (${unit}, log scale)` }, { lo: 0, hi: peak * 1.1, ticks: [], label: "" });
+    const bw = (b.x1 - b.x0) / BINS;
+    counts.forEach((c, k) => {
+      const mid = 10 ** (lo + ((k + 0.5) / BINS) * (hi - lo));
+      ctx.fillStyle = mid < 126 ? C.warm : C.accent;
+      ctx.globalAlpha = 0.6;
+      ctx.fillRect(b.x0 + k * bw + 1, A.Y(c), bw - 2, b.y1 - A.Y(c));
+    });
+    ctx.globalAlpha = 1;
+    line(ctx, [[A.X(Math.log10(126)), b.y0], [A.X(Math.log10(126)), b.y1]], C.muted, 1, [3, 4]);
+    label(ctx, "6 months", A.X(Math.log10(126)) + 4, b.y0 + 8, C.muted);
+    if (isFinite(truth) && truth <= 3000) {
+      line(ctx, [[A.X(Math.log10(truth)), b.y0], [A.X(Math.log10(truth)), b.y1]], C.fg, 1.6);
+      label(ctx, "true", A.X(Math.log10(truth)) + 4, b.y0 + 22, C.fg);
+    }
+    if (inf) label(ctx, `${Math.round((inf / hl.length) * 100)}% no reversion / > 8 yr`, b.x1, b.y0 + 8, C.muted, "right");
+  }
+
+  mount("data-ou", (root, env) => {
+    const canvas = root.querySelector("canvas")!;
+    const Z = normals(17, M * MAXN);
+    const x = eth.logratio as number[];
+    const dates = eth.dates as string[];
+    // rolling one-year windows, every 15 days
+    const roll: { i: number; hl: number }[] = [];
+    for (let s = 0; s + 365 <= x.length; s += 15) roll.push({ i: s + 364, hl: halfLife(slope(x, s, s + 365)) });
+    const fullHl = halfLife(slope(x, 0, x.length));
+    const mode = segmented(root, () => draw());
+
+    function drawSim(ctx: CanvasRenderingContext2D, C: Colors, w: number, h: number) {
+      const theta = +$in(root, "theta").value, years = +$in(root, "years").value;
+      const n = Math.round(years * 252) + 1;
+      const b = Math.exp(-theta * DT);
+      const sd = theta > 0 ? Math.sqrt((1 - b * b) / (2 * theta)) : Math.sqrt(DT);
+      const hl: number[] = [];
+      let under = 0, belowOne = 0;
+      const path = new Float64Array(n);
+      const series = new Float64Array(n);
+      for (let m = 0; m < M; m++) {
+        series[0] = 0;
+        for (let t = 1; t < n; t++) series[t] = b * series[t - 1] + sd * Z[m * MAXN + t];
+        if (m === 0) path.set(series);
+        const bh = slope(series, 0, n);
+        const d = halfLife(bh);
+        hl.push(d);
+        if (d < 126) under++;
+        if (bh < 1) belowOne++;
+      }
+      const top: Box = { x0: 52, x1: w - 12, y0: 18, y1: h * 0.36 };
+      let lo = Infinity, hi = -Infinity;
+      for (const v of path) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+      const pad = (hi - lo) * 0.1 || 0.1;
+      const A = axes(ctx, C, top, { lo: 0, hi: n - 1, ticks: [], label: "" }, { lo: lo - pad, hi: hi + pad, ticks: [0], fmt: () => "m", label: "one sample" });
+      const pts: [number, number][] = [];
+      const step = Math.max(1, Math.floor(n / 600));
+      for (let t = 0; t < n; t += step) pts.push([A.X(t), A.Y(path[t])]);
+      line(ctx, pts, C.accent, 1.2);
+      const truth = theta > 0 ? Math.log(2) / theta * 252 : Infinity;
+      histogram(ctx, C, { x0: 52, x1: w - 12, y0: h * 0.36 + 34, y1: h - 34 }, hl, truth, "trading days");
+      $out(root, "theta").textContent = theta.toFixed(1) + " / yr";
+      $out(root, "years").textContent = years.toFixed(2).replace(/\.?0+$/, "") + (years === 1 ? " year" : " years");
+      $out(root, "r1l").textContent = "True half-life";
+      $out(root, "r2l").textContent = "Median fitted";
+      $out(root, "r3l").textContent = "Fits under 6 months";
+      $out(root, "r4l").textContent = "Slope below 1";
+      $out(root, "r1").textContent = days(truth);
+      $out(root, "r2").textContent = days(median(hl));
+      $out(root, "r3").textContent = Math.round((under / M) * 100) + "%";
+      $out(root, "r4").textContent = Math.round((belowOne / M) * 100) + "%";
+      root.querySelector("[data-foot]")!.textContent = `${M} simulated samples of daily data. θ = 0 is a pure random walk. Fitted with the textbook regression of x(t+1) on x(t).`;
+    }
+
+    function drawReal(ctx: CanvasRenderingContext2D, C: Colors, w: number, h: number) {
+      const n = x.length;
+      const top: Box = { x0: 52, x1: w - 12, y0: 18, y1: h * 0.42 };
+      let lo = Infinity, hi = -Infinity;
+      for (const v of x) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+      const yearTicks: number[] = [];
+      dates.forEach((d, i) => { if (d.endsWith("-01-01")) yearTicks.push(i); });
+      const fmtYear = (i: number) => dates[Math.round(i)]?.slice(0, 4) ?? "";
+      const A = axes(ctx, C, top, { lo: 0, hi: n - 1, ticks: yearTicks, fmt: fmtYear },
+        { lo: lo - 0.05, hi: hi + 0.05, ticks: [0.03, 0.05, 0.08].map(Math.log), fmt: (v) => Math.exp(v).toFixed(2), label: "ETH / BTC" });
+      const pts: [number, number][] = [];
+      for (let t = 0; t < n; t += 2) pts.push([A.X(t), A.Y(x[t])]);
+      line(ctx, pts, C.accent, 1.3);
+      const bot: Box = { x0: 52, x1: w - 12, y0: h * 0.42 + 40, y1: h - 30 };
+      const ylo = Math.log10(10), yhi = Math.log10(3000);
+      const B = axes(ctx, C, bot, { lo: 0, hi: n - 1, ticks: yearTicks, fmt: fmtYear },
+        { lo: ylo, hi: yhi, ticks: [1, Math.log10(30), 2, Math.log10(365), 3], fmt: (v) => days(10 ** v), label: "half-life fitted on the previous 365 days" });
+      line(ctx, [[bot.x0, B.Y(Math.log10(180))], [bot.x1, B.Y(Math.log10(180))]], C.muted, 1, [3, 4]);
+      label(ctx, "6 months", bot.x1 - 4, B.Y(Math.log10(180)) - 8, C.muted, "right");
+      for (const r of roll) {
+        const v = isFinite(r.hl) ? Math.min(yhi, Math.log10(r.hl)) : yhi;
+        ctx.fillStyle = r.hl < 180 ? C.warm : C.accent;
+        ctx.beginPath();
+        ctx.arc(B.X(r.i), B.Y(v), 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const under = roll.filter((r) => r.hl < 180).length;
+      $out(root, "r1l").textContent = "Ratio, first → last";
+      $out(root, "r2l").textContent = "Median 1-yr fit";
+      $out(root, "r3l").textContent = "Windows under 6 mo";
+      $out(root, "r4l").textContent = "Full-sample fit";
+      $out(root, "r1").textContent = Math.exp(x[0]).toFixed(3) + " → " + Math.exp(x[n - 1]).toFixed(3);
+      $out(root, "r2").textContent = days(median(roll.map((r) => r.hl)));
+      $out(root, "r3").textContent = Math.round((under / roll.length) * 100) + "%";
+      $out(root, "r4").textContent = days(fullHl);
+      root.querySelector("[data-foot]")!.textContent = `Binance ETHUSDT / BTCUSDT perpetual daily closes, ${dates[0]} to ${dates[n - 1]} (data.binance.vision). Half-lives in calendar days.`;
+    }
+
+    function draw() {
+      const { ctx, w, h } = fit(canvas);
+      ctx.clearRect(0, 0, w, h);
+      if (mode() === "real") drawReal(ctx, env.C, w, h);
+      else drawSim(ctx, env.C, w, h);
+    }
+    return { draw };
+  });
+</script>

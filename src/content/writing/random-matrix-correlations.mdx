@@ -1,0 +1,158 @@
+---
+title: Most of a correlation matrix is noise
+description: "Random matrix theory, first used for the energy levels of heavy nuclei, tells you which eigenvalues of a sample correlation matrix carry information. With a year of daily data on a hundred assets, almost none of them do."
+date: 2026-11-07
+topic: Quantitative finance
+tags: [Random matrices, Portfolio construction]
+interactive: true
+slug: random-matrix-correlations
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import SpectrumExplorer from "../../components/SpectrumExplorer.astro";
+
+{/*
+  Numbers from a NumPy check: N = 100 assets, T = 250 days, 300 repetitions per experiment.
+  Factor model used: one market factor (betas 0.5–1.5, 20% vol), four equal sectors (10% vol each),
+  idiosyncratic vols 20–50%. Real data: data.binance.vision daily klines, crypto
+  perpetuals only (contract type COIN / PERPETUAL), complete over the window.
+*/}
+
+Every portfolio optimizer starts with a covariance matrix estimated from history. With $N$ assets that matrix has
+$N(N+1)/2$ numbers in it: 5,050 for a hundred assets. A year of daily returns gives $T = 250$ observations per
+asset. Something has to give, and random matrix theory says exactly what.
+
+## A physicist's null hypothesis
+
+In the 1950s Wigner faced a similar problem with heavy atomic nuclei: too many interacting parts to model, but a
+spectrum of energy levels that could be measured [1, 2]. His move was to ask what the spectrum of a *random* matrix
+looks like, and compare. Deviations from the random baseline are where the physics is.
+
+For correlation matrices the baseline is the Marchenko–Pastur law [3], and physicists first compared it with
+stock-market correlations in 1999 [4, 5]. If the $N$ series were pure,
+independent noise, the eigenvalues of their sample correlation matrix would not all be 1. They would spread over
+a band that depends only on the ratio $q = N/T$:
+
+$$
+\lambda_\pm = \left(1 \pm \sqrt{q}\right)^2, \qquad
+\rho(\lambda) = \frac{\sqrt{(\lambda_+ - \lambda)(\lambda - \lambda_-)}}{2\pi q \lambda}
+\quad \text{for } \lambda_- \le \lambda \le \lambda_+ .
+$$
+
+For $N = 100$ and $T = 250$, $q = 0.4$ and the noise band runs from **0.14 to 2.66**. A sample of pure noise
+lands where the law says: its eigenvalues ran from 0.15 to 2.54 in one draw. Any eigenvalue inside the band is
+indistinguishable from noise.
+
+## What survives
+
+Real returns are not independent: there is a market, there are sectors. In a simulated market with one market
+factor and four sectors, the true correlation matrix has one large eigenvalue (about 26, the market) and four
+sector eigenvalues around 2.0–2.3. The sector eigenvalues sit *inside* the noise band. With one year of data
+they are real but invisible; on average only about two eigenvalues of the sample matrix rise above $\lambda_+$.
+
+<SpectrumExplorer />
+
+<Callout label="The point">
+With $N/T = 0.4$, a sample correlation matrix contains one clearly real direction (the market), perhaps one more,
+and a bulk of 98 eigenvalues whose structure is mostly sampling noise.
+</Callout>
+
+## A hundred crypto assets
+
+The "100 crypto perps" tab uses real data: daily log returns of the 100 largest Binance crypto perpetuals by
+traded value, over the 250 days to October 2026. That is $N = 100$, $T = 250$, the same $q = 0.4$ as the
+simulation.
+
+The top eigenvalue is **30.5**: a single "crypto market" direction carries 30% of the total variance. Against the
+pure-noise edge of 2.66, it is the only eigenvalue that clearly stands out.
+
+There is a subtlety. Once the market mode takes its 30%, the bulk only carries the remaining 70% of the variance,
+and the noise band shrinks with it: the edge moves from 2.66 to about 1.85. Against that edge, five more eigenvalues (2.44, 2.22, 2.13, 2.02 and 1.87)
+poke out. They are candidates for real structure such as groups of coins that move together, but they sit close
+to the edge, and with one year of data that is weak evidence. Everything else is indistinguishable from noise.
+
+## Why an optimizer cares
+
+The minimum-variance portfolio is $w \propto \Sigma^{-1}\mathbf{1}$. Inverting a matrix amplifies its smallest
+eigenvalues, and the smallest sample eigenvalues are exactly the ones noise pushed too low. The optimizer
+reads them as "almost riskless combinations" and loads up on them.
+
+For pure noise the damage has a closed form [6, 7]. The portfolio's in-sample variance is $(1 - q)$ times the true
+minimum, and its true (out-of-sample) variance is $1/(1-q)$ times it. With $q = 0.4$ the simulation gives 0.60
+and 1.66 against a theory of 0.60 and 1.67. **The variance you report is nearly three times smaller than the
+variance you take.**
+
+## Cleaning by clipping
+
+The simplest repair, eigenvalue clipping [8], keeps the eigenvalues above $\lambda_+$ and replaces everything in
+the bulk with their average, which preserves the trace. The eigenvectors are untouched.
+
+In the factor-model simulation:
+
+| Covariance used | True variance of the min-variance portfolio |
+| --- | --- |
+| Sample | 1.67 × optimal |
+| Clipped | 1.17 × optimal |
+
+Clipping removes most of the excess risk with a few lines of code and no tuning parameter. Better estimators
+exist, such as Ledoit–Wolf shrinkage [9] and the rotationally invariant estimators reviewed by Bun, Bouchaud and
+Potters [7], but they share the idea: don't trust the bulk.
+
+```python title="clip.py"
+import numpy as np
+
+def clip_correlation(returns):
+    """Keep eigenvalues above the Marchenko–Pastur edge, flatten the rest."""
+    T, N = returns.shape
+    corr = np.corrcoef(returns, rowvar=False)
+    edge = (1 + np.sqrt(N / T)) ** 2
+    eigval, eigvec = np.linalg.eigh(corr)
+    noise = eigval < edge
+    eigval[noise] = eigval[noise].mean()          # trace preserved
+    cleaned = (eigvec * eigval) @ eigvec.T
+    d = np.sqrt(np.diag(cleaned))
+    return cleaned / np.outer(d, d), int((~noise).sum())
+
+def min_variance_weights(cov):
+    w = np.linalg.solve(cov, np.ones(len(cov)))
+    return w / w.sum()
+```
+
+To use it in an optimizer, rebuild a covariance from the cleaned correlation and the sample volatilities.
+
+## Takeaway
+
+A sample correlation matrix is a few real directions floating on a sea of noise, and random matrix theory draws
+the waterline. Below it, the right move is to stop pretending you know anything, and an optimizer that is
+forced to admit that takes noticeably less hidden risk.
+
+## Data
+
+Binance Data Collection, USDⓈ-M futures daily klines, [data.binance.vision](https://data.binance.vision/).
+
+## References
+
+1. E. P. Wigner, "Characteristic vectors of bordered matrices with infinite dimensions," *Annals of Mathematics*
+   62(3), 548–564 (1955). [doi:10.2307/1970079](https://doi.org/10.2307/1970079)
+2. E. P. Wigner, "On the distribution of the roots of certain symmetric matrices," *Annals of Mathematics* 67(2),
+   325–327 (1958). [doi:10.2307/1970008](https://doi.org/10.2307/1970008)
+3. V. A. Marčenko and L. A. Pastur, "Distribution of eigenvalues for some sets of random matrices," *Mathematics of
+   the USSR-Sbornik* 1(4), 457–483 (1967). [doi:10.1070/SM1967v001n04ABEH001994](https://doi.org/10.1070/SM1967v001n04ABEH001994)
+4. L. Laloux, P. Cizeau, J.-P. Bouchaud and M. Potters, "Noise dressing of financial correlation matrices,"
+   *Physical Review Letters* 83(7), 1467–1470 (1999). [doi:10.1103/PhysRevLett.83.1467](https://doi.org/10.1103/PhysRevLett.83.1467)
+5. V. Plerou, P. Gopikrishnan, B. Rosenow, L. A. N. Amaral and H. E. Stanley, "Universal and nonuniversal
+   properties of cross correlations in financial time series," *Physical Review Letters* 83(7), 1471–1474 (1999).
+   [doi:10.1103/PhysRevLett.83.1471](https://doi.org/10.1103/PhysRevLett.83.1471)
+6. S. Pafka and I. Kondor, "Noisy covariance matrices and portfolio optimization II," *Physica A* 319, 487–494
+   (2003). [doi:10.1016/S0378-4371(02)01499-1](https://doi.org/10.1016/S0378-4371(02)01499-1)
+7. J. Bun, J.-P. Bouchaud and M. Potters, "Cleaning large correlation matrices: tools from random matrix theory,"
+   *Physics Reports* 666, 1–109 (2017). [doi:10.1016/j.physrep.2016.10.005](https://doi.org/10.1016/j.physrep.2016.10.005)
+8. L. Laloux, P. Cizeau, M. Potters and J.-P. Bouchaud, "Random matrix theory and financial correlations,"
+   *International Journal of Theoretical and Applied Finance* 3(3), 391–397 (2000).
+   [doi:10.1142/S0219024900000255](https://doi.org/10.1142/S0219024900000255)
+9. O. Ledoit and M. Wolf, "A well-conditioned estimator for large-dimensional covariance matrices," *Journal of
+   Multivariate Analysis* 88(2), 365–411 (2004). [doi:10.1016/S0047-259X(03)00096-4](https://doi.org/10.1016/S0047-259X(03)00096-4)
+
+{/* Verified on 2026-11-07 (Crossref, zbMATH, arXiv full texts). Clipping is credited to Laloux et al. (2000) by
+    Bun et al. (2017), not to the 1999 PRL. Pafka & Kondor state the in/out-of-sample result in standard-deviation
+    form (√(1−q), 1/√(1−q)); squared, it is the variance form used here. */}

@@ -1,0 +1,144 @@
+---
+title: How much leverage the typical path can take
+description: "Leverage multiplies the drift but squares the volatility drag, so there is a best amount of it. For a volatile asset that amount is well below fully invested."
+date: 2026-11-07
+topic: Quantitative finance
+tags: [Kelly criterion, Stochastic calculus]
+interactive: true
+slug: kelly-leverage
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import KellyExplorer from "../../components/KellyExplorer.astro";
+
+{/*
+  Series: follows "Why the typical price path loses" (GBM). Every number below was checked with a NumPy
+  script (closed form + 20,000 simulated paths); rerun if a parameter changes.
+*/}
+
+The [previous note](/writing/geometric-brownian-motion/) ended on an uncomfortable fact: a price that drifts up
+6% a year with 38% volatility has a *median* that shrinks, because volatility drag ($\sigma^2/2 = 7.2\%$) is
+larger than the drift. The obvious next question is practical. You don't have to put all your money in that
+asset. If you can choose how much to hold, and even borrow to hold more, which amount makes the typical outcome
+grow fastest?
+
+The answer has a name, the Kelly criterion, and a one-line derivation.
+
+## A coin first
+
+Take a bet that pays even money and wins with probability $p = 0.55$. You stake a fraction $f$ of your wealth
+each round. After $n$ rounds with $k$ wins, wealth is $W_n = W_0 (1+f)^k (1-f)^{n-k}$, so the growth rate per
+round is
+
+$$
+G(f) = p \ln(1+f) + (1-p)\ln(1-f).
+$$
+
+Setting $G'(f) = 0$ gives $f^* = 2p - 1 = 10\%$, and a growth rate of about $0.50\%$ per round. Stake $20\%$
+instead, twice as much, and the growth rate falls to almost exactly zero: twice the risk, none of the reward.
+The rule comes from a 1956 paper by John Kelly, then at Bell Labs, on the information rate of noisy communication
+channels [1]; the investing reading came later.
+
+## The continuous version
+
+Now hold a fraction $L$ of wealth in an asset that follows geometric Brownian motion, keep the rest in cash
+earning $r$, and rebalance continuously. $L > 1$ means borrowing. Wealth itself follows a GBM, with drift
+$r + L(\mu - r)$ and volatility $L\sigma$, so the result from the previous note applies directly: the median
+grows at
+
+$$
+g(L) = r + L(\mu - r) - \tfrac{1}{2} L^2 \sigma^2 .
+$$
+
+The reward is linear in $L$ and the drag is quadratic. The parabola peaks at
+
+$$
+L^* = \frac{\mu - r}{\sigma^2}, \qquad g^* = r + \frac{(\mu - r)^2}{2\sigma^2}.
+$$
+
+Two consequences fall out of the parabola. Holding a fraction $c$ of the Kelly amount earns
+$(2c - c^2)$ of the maximum excess growth, so **half Kelly keeps three quarters of the growth with half the
+volatility**. And at $c = 2$ the excess growth is zero: you carry all the volatility for nothing.
+
+<KellyExplorer />
+
+## What it says about the hero's asset
+
+With $\mu = 6\%$, $\sigma = 38\%$ and $r = 0$, Kelly says $L^* = 0.42$: keep 58% of the money in cash. The best
+achievable median growth is a modest $1.25\%$ a year, while holding the asset outright ($L = 1$) shrinks the
+median by $1.2\%$ a year.
+
+A daily-rebalanced simulation (one year, 20,000 paths) shows what each choice does to the typical outcome:
+
+| Leverage $L$ | Median wealth | Mean wealth | Paths below start |
+| --- | --- | --- | --- |
+| 0.42 (Kelly) | 1.015 | 1.028 | 46% |
+| 1 | 0.993 | 1.068 | 51% |
+| 2 | 0.854 | 1.143 | 58% |
+| 3 | 0.635 | 1.229 | 66% |
+
+The mean keeps rising with leverage while the median collapses. A three-times leveraged, daily-rebalanced product
+on this asset loses about a third of its value on a typical year even though its expected value goes *up*. This
+is the "leveraged ETF decay" people complain about, and it needs no fees or tracking error to appear.
+
+For a calmer asset the answer flips. A broad equity index with $\mu = 8\%$, $r = 4\%$ and $\sigma = 16\%$ gives
+$L^* = 1.56$: Kelly says borrow. The criterion is not "use less leverage", it is "size by $\mu/\sigma^2$".
+
+## Why nobody bets full Kelly
+
+**The drift is the number you know worst.** The standard error of an estimated annual drift is about
+$\sigma/\sqrt{T}$ for $T$ years of data: with 38% volatility and ten years of history that is $\pm 12\%$ around a
+$6\%$ estimate. $L^*$ is linear in $\mu$, so the "optimal" leverage is uncertain by a factor of two or more.
+
+**Drawdowns are deep even at the optimum.** In this model log-wealth is a Brownian motion with drift, and the
+chance that wealth *ever* falls to a fraction $x$ of its starting value is
+
+$$
+\mathbb{P}(\text{ever reach } x W_0) = x^{\,2/c - 1}
+$$
+
+for a fraction $c$ of Kelly (with $r = 0$). At full Kelly the chance of halving at some point is $1/2$; at half
+Kelly it is $1/8$. Most people discover they cannot sit through the full-Kelly path.
+
+**The left wall is a cliff.** In the continuous model the growth curve is a symmetric parabola, so overbetting
+and underbetting by the same amount cost the same. Real returns jump. In the coin version $G(f) \to -\infty$ as
+$f \to 1$: a single bad outcome at high leverage is not a slower path, it is the end of the path.
+
+So practitioners treat $L^*$ as a ceiling and run a fraction of it, often a half.
+
+## Checking it numerically
+
+```python title="kelly.py"
+import numpy as np
+
+def growth(L, mu, sigma, r=0.0):
+    return r + L * (mu - r) - 0.5 * L**2 * sigma**2
+
+def leveraged_paths(L, mu, sigma, days=252, n=20_000, seed=1):
+    rng = np.random.default_rng(seed)
+    dt = 1 / 252
+    z = rng.standard_normal((n, days))
+    asset = np.exp((mu - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * z) - 1
+    return np.prod(1 + L * asset, axis=1)  # rebalanced to L every day
+
+mu, sigma = 0.06, 0.38
+L_star = mu / sigma**2
+print(f"Kelly leverage {L_star:.2f}, max growth {growth(L_star, mu, sigma):.2%}")
+for L in (L_star, 1, 2, 3):
+    w = leveraged_paths(L, mu, sigma)
+    print(f"L={L:.2f}  median {np.median(w):.3f}  mean {w.mean():.3f}  below start {(w < 1).mean():.0%}")
+```
+
+## Takeaway
+
+The median path is the one you will most likely live through, and it grows at $\mu - \sigma^2/2$, not at
+$\mu$. Leverage scales the first term and squares the second, which is why the same rule that says "borrow" for
+an index fund says "keep most of it in cash" for a volatile coin.
+
+## References
+
+1. J. L. Kelly Jr., "A new interpretation of information rate," *Bell System Technical Journal* 35(4), 917–926
+   (1956). [doi:10.1002/j.1538-7305.1956.tb03809.x](https://doi.org/10.1002/j.1538-7305.1956.tb03809.x)
+
+{/* Verified on 2026-11-07 (Crossref; Kelly's Bell Labs affiliation from the issue's contributor notes). The
+    drawdown formula is the standard first-passage probability of a Brownian motion with drift. */}

@@ -1,0 +1,340 @@
+---
+title: Getting crypto market data, and what each route costs you
+description: "Crypto exchanges give their market data away. The real choice is the route: REST, WebSocket, FIX and binary feeds, bulk archives, a library like ccxt, or a vendor that collects it for you. Examples from Binance and OKX, with a recording of what polling misses."
+date: 2026-11-08
+topic: Quantitative finance
+tags: [Market data, APIs]
+slug: crypto-market-data
+interactive: true
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import PollingExplorer from "../../components/PollingExplorer.astro";
+
+{/*
+  Every limit, endpoint and rule below was read from the exchanges' own documentation on 2026-11-07
+  (Binance spot API docs on GitHub, OKX v5 docs), and from the ccxt, CoinGecko, Tardis.dev and Kaiko
+  documentation on 2026-11-08. These change; the date matters. Measured numbers come from short Python
+  scripts against the public endpoints and archives named in the text.
+*/}
+
+Equity market data is a product: you buy a feed from the exchange or a vendor, and the license decides what you
+may do with it. Crypto exchanges give theirs away. Every large venue publishes its trades, candles and order book
+to anyone with an internet connection, no account needed. So the question is not where to buy data but how to take
+it. The exchanges offer four doors, each with a different contract about who holds the state, who pays for
+gaps, and how far behind the market you are. Around them sit two shortcuts: a library that speaks to every
+exchange in one dialect, and vendors who have already done the collecting.
+
+This note walks through all six with Binance [1, 2] and OKX [3] as examples. Every limit quoted is from the
+providers' documentation as of November 2026; they change often enough that the date matters.
+
+## 1. REST: ask when you need it
+
+A REST endpoint answers one question per request: the last 1,000 trades, the order book right now, the candles
+between two timestamps. The connection carries no memory between requests, which is what makes REST easy to reason
+about. A failed request can simply be repeated, a job can be rerun from any point, and the code is a loop around
+an HTTP call.
+
+The price is the rate limit. Binance counts a **weight** per request against a budget per IP address: 6,000 per
+minute on the spot API, where a page of candles costs 2 and a full 5,000-level order book costs 250 [1]. Exceed it
+and you get HTTP 429 [5]; keep going after the 429s and the IP is banned with status 418, for anything from two
+minutes to three days. OKX sets a limit per endpoint instead: 40 requests per 2 seconds for current candles, 20
+for the history endpoint [3].
+
+For history, REST is fine. A week of one-minute BTC/USDT candles is 10,080 rows: 11 requests to Binance at up to
+1,000 rows each, 34 to OKX at up to 300.
+
+```python title="candles.py"
+import time
+import requests
+
+def binance_klines(symbol, interval, start_ms, end_ms):
+    """Page forward through /api/v3/klines, 1,000 candles per request (weight 2 each)."""
+    out, t = [], start_ms
+    while t < end_ms:
+        rows = requests.get("https://data-api.binance.vision/api/v3/klines",
+                            params={"symbol": symbol, "interval": interval, "startTime": t,
+                                    "endTime": end_ms - 1, "limit": 1000}, timeout=10).json()
+        if not rows:
+            break
+        out += rows
+        t = rows[-1][0] + 1                  # the next page starts after the last open time
+    return out
+
+def okx_candles(inst_id, bar, start_ms, end_ms):
+    """Page backwards through /api/v5/market/history-candles, 300 per request, newest first."""
+    out, after = [], end_ms
+    while True:
+        rows = requests.get("https://openapi.okx.com/api/v5/market/history-candles",
+                            params={"instId": inst_id, "bar": bar, "after": after, "limit": 300},
+                            timeout=10).json()["data"]
+        rows = [r for r in rows if int(r[0]) >= start_ms]
+        if not rows:
+            break
+        out += rows
+        after = rows[-1][0]                   # "after" means older than this timestamp
+        time.sleep(0.1)                       # stay under 20 requests per 2 seconds
+    return out[::-1]
+
+end = 1_793_491_200_000                       # 2026-11-01 00:00 UTC
+b = binance_klines("BTCUSDT", "1m", end - 7 * 86_400_000, end)
+o = okx_candles("BTC-USDT", "1m", end - 7 * 86_400_000, end)
+```
+
+Binance asks public-data clients to use the `data-api.binance.vision` host [1]; the code does. The two loops
+already show the small differences that cause bugs: the symbol is `BTCUSDT` on one venue and
+`BTC-USDT` on the other, one paginates forward and the other backwards, and one end bound is inclusive. The
+data agrees well: over that week the two venues' one-minute closes differed by a median of 0.7 basis points and at
+most 9.6.
+
+## 2. WebSocket: let the exchange tell you
+
+REST answers when you ask. For anything happening now, asking is the wrong model. A poller sees the market only
+at the moments it polls, and if more happened between two polls than one response holds, some of it is gone.
+
+<PollingExplorer />
+
+The figure replays 30 minutes of Binance BTC/USDT spot trades, recorded from the public stream on a quiet Saturday
+evening: 8,155 trades, an average of 4.5 a second, but 436 seconds with none and one second with 466. Trading
+comes in bursts, and the bursts are what break a poller.
+
+- **Delay.** Polling once a second, the median trade reaches you 0.6 s after it happened: half the interval plus
+  the response's trip back. The stream delivered the same trades a median 71 ms after their exchange timestamp.
+- **Gaps.** The recent-trades endpoint returns at most 1,000 trades, 500 by default. Ask for 100 and poll every
+  second, and 20% of the trades were never seen, all of them inside bursts. Poll every 30 s with the default 500 and
+  you lose 4.7%.
+- **Budget.** Each poll costs 25 weight. Four polls a second use the whole 6,000-per-minute budget of the IP, and
+  still deliver trades a median 0.27 s late, about four times slower than the stream.
+
+A poller can be made complete by paging through older trades by ID, but it cannot be made fast: its delay is set
+by its interval, and the interval by the rate limit.
+
+<Callout label="How the delays were measured">
+Stream delay is the local receive time minus the exchange's trade timestamp, on a laptop clock kept by NTP, so
+it carries the clock's error (tens of milliseconds). Polling delay is computed by replaying the recorded trades
+against a poll schedule, plus half of the 285 ms median round trip I measured to the trades endpoint over a
+kept-alive connection. Opening a new HTTPS connection for each request took 0.4 s to 1.1 s, depending on the
+host: reuse the connection.
+</Callout>
+
+A WebSocket [4] turns the direction around: one long-lived connection over which the exchange pushes every event
+as it happens. One connection can carry many streams (up to 1,024 on Binance [2]), and nothing is spent on
+requests you did not need.
+
+What you give up is statelessness. The connection now has a lifecycle you must manage:
+
+| | Binance [2] | OKX [3] |
+| --- | --- | --- |
+| Keep-alive | server pings every 20 s, pong within 1 min | send `ping` before 30 s of silence |
+| Disconnected | at 24 hours, always | after 30 s with no data |
+| Client limits | 5 messages / s per connection | 3 connections / s; 480 (un)subscribe or login / h per connection |
+| Order book | REST snapshot, then diffs every 100 ms | 400-level snapshot, then diffs every 100 ms |
+
+The order book is where this matters most. For more than the top few levels, neither exchange resends the book on
+every change; they send a snapshot once and then only the levels that changed. Your copy of the book is correct only if you applied every
+diff, in order, to the right snapshot, so both venues number their messages and expect you to check.
+
+Binance's documented procedure [2]: open the diff stream and buffer it, fetch a REST snapshot, drop buffered events
+the snapshot already contains, then apply each event only if its first update ID `U` is the previous event's last
+ID `u` plus one. Anything else means you missed a message, and the book must be thrown away and rebuilt. OKX
+marks each message with `seqId` and `prevSeqId`; a message whose `prevSeqId` is not the last `seqId` you saw is a
+gap. OKX's messages also carry a `checksum` field, but the documentation now says it is fixed to 0 and must not be
+used: sequence numbers replaced it. Code written against the older documentation still compiles and silently
+checks nothing.
+
+```python title="local_book.py"
+def apply(book, event):
+    """One step of Binance's local order book procedure. Returns False on a gap: rebuild from a new snapshot."""
+    if event["u"] <= book["id"]:
+        return True                           # already in the snapshot
+    if event["U"] > book["id"] + 1:
+        return False                          # missed at least one message
+    for side, key in (("bids", "b"), ("asks", "a")):
+        for price, qty in event[key]:
+            if float(qty) == 0:
+                book[side].pop(price, None)   # zero quantity removes the level
+            else:
+                book[side][price] = qty
+    book["id"] = event["u"]
+    return True
+```
+
+Run for the same 30 minutes, both checks passed. On Binance, 17,878 diff events were applied on top of one
+snapshot, a dozen older ones were discarded as the procedure says, and no gap appeared. On OKX, each of 12,580
+messages had a `prevSeqId` matching the `seqId` before it. A quiet half hour on a home
+connection proves little about a volatile day, which is exactly when a gap costs most; the check has to stay in.
+
+Trades need the same care in a different form. Binance's raw trade stream numbers every trade, and in the recording
+the IDs ran without a break. OKX's trades channel sends one message per taker order and price, aggregating the
+fills inside it [3], so its trade IDs skip by design: in 770 messages the ID jumped 93 times. A gap check written
+for one venue raises false alarms on the other.
+
+## 3. FIX and binary feeds: the institutional door
+
+Traditional electronic trading has its own protocol, FIX, maintained by the FIX Trading Community, the industry's
+nonprofit standards body. Binance offers it on the spot market [1]: FIX 4.4 messages over a TLS connection, in three
+kinds of session. Order entry places and cancels orders; drop copy receives a copy of the account's executions,
+delayed by one second; market data streams quotes and trades. Two details mark it as the institutional door: FIX
+sessions accept only Ed25519 API keys, and the same sessions can answer in Simple Binary Encoding (SBE) [6] instead
+of FIX text, on ports 9001 and 9002.
+
+SBE is also available without FIX. Binance's SBE market-data streams send public market data as binary
+messages with timestamps in microseconds, and need an Ed25519 API key even though the data is public [1]. OKX publishes SBE order-book and trade channels on a separate WebSocket endpoint, but its tick-by-tick
+full-depth channels (`books-l2-tbt`, `books50-l2-tbt`) are open only to accounts in fee tier VIP4 and above [3].
+
+The pattern is the same on both venues: the free JSON feed is good enough to learn from and to build most research
+on, and the fastest, finest-grained feeds sit behind an API key or a trading volume.
+
+## 4. Archives: the data someone already collected
+
+For research, the fastest API is often no API. Binance publishes its public market data as daily and monthly ZIP
+files at data.binance.vision: klines, trades and aggregated trades, for spot and for both kinds of futures [2].
+Daily files appear the next day. Each file comes with a SHA-256 checksum, and the archive keeps a list of files it has
+replaced after finding problems, which is worth reading before trusting any one file.
+
+```python title="archive.py"
+import hashlib, io, zipfile
+import requests
+
+base = "https://data.binance.vision/data/spot/daily/klines/BTCUSDT/1m/"
+name = "BTCUSDT-1m-2026-10-31.zip"
+blob = requests.get(base + name, timeout=30).content
+expected = requests.get(base + name + ".CHECKSUM", timeout=30).text.split()[0]
+assert hashlib.sha256(blob).hexdigest() == expected, "corrupt download"
+
+with zipfile.ZipFile(io.BytesIO(blob)) as z:
+    rows = z.read(z.namelist()[0]).decode().splitlines()
+print(len(rows), rows[0].split(",")[0])     # 1440 1793404800000000
+```
+
+That last number is a trap. The REST API returns milliseconds; spot files from 1 January 2025 onwards are in
+**microseconds** [2]. Mix the two and the dates come out wrong by a factor of a thousand. Nothing fails, so
+the error can sit in a dataset for a long time.
+
+## 5. Libraries: one client, many exchanges
+
+Everything so far has been one venue at a time, and the venues disagree on symbols, pagination, units and error
+codes. The open-source library ccxt [7] exists to hide that: one interface to more than a hundred exchanges, in
+eight languages with Python among them, under the MIT license. Symbols become `BTC/USDT` everywhere,
+timestamps are milliseconds everywhere, and a rate limiter, on by default, paces requests for you. A research
+terminal I work on reads its exchange data through it.
+
+The candle download from section 1 becomes one function for both venues:
+
+```python title="ccxt_candles.py"
+import ccxt
+
+def fetch_range(exchange, symbol, start_ms, end_ms):
+    out, since = [], start_ms
+    while since < end_ms:
+        rows = exchange.fetch_ohlcv(symbol, "1m", since=since, limit=1000)
+        rows = [r for r in rows if r[0] < end_ms]
+        if not rows:
+            break
+        out += rows
+        since = rows[-1][0] + 60_000          # next minute after the last candle
+    return out
+
+end = 1_793_491_200_000                       # 2026-11-01 00:00 UTC
+for exchange in (ccxt.binance(), ccxt.okx()):
+    candles = fetch_range(exchange, "BTC/USDT", end - 7 * 86_400_000, end)
+```
+
+It returned the same 10,080 candles per venue as the hand-written loops, identical in every open, high, low,
+close and volume. On OKX, ccxt translated the forward paging into the backward `after`/`before` parameters and
+capped each page at 300 by itself: 11 requests to Binance, 34 to OKX, exactly as before.
+
+The abstraction holds for the common case and leaks at the edges. Three places I checked:
+
+- **Automatic pagination.** ccxt can page for you with `params={"paginate": True}`, which its manual marks as
+  experimental [7]. For the same week it returned 10,000 of the 10,080 candles on Binance, stopping at the default
+  of 10 requests without an error, and on OKX it raised an error asking for a larger `paginationCalls`. One flag,
+  two behaviors, and the quiet one is the dangerous one.
+- **Order books.** The WebSocket half, ccxt Pro, is a free part of the library [8]. Its `watch_order_book`
+  keeps the local book for you, and in the source of version 4.5.92 it implements both venues' sequence checks
+  from section 2: `U` and `u` on Binance, `prevSeqId` on OKX. A gap surfaces as an exception, but a different one
+  per venue (`ChecksumError` on Binance, `InvalidNonce` on OKX), so the reconnect logic still has to know about
+  both. Over a 30-second test both books stayed in sync with no errors.
+- **Venue-specific fields.** What only one exchange has does not fit a unified shape. Most unified structures
+  keep the exchange's original reply in an `info` field, and code that reaches into it is venue-specific again.
+
+A library buys breadth, not depth. When one venue matters more than the others, its own documentation is still
+the place to read what a field means.
+
+## 6. Aggregators: someone else runs the collectors
+
+The last option is not to talk to exchanges at all. Two quite different kinds of business sell (or give away)
+data that someone else has collected.
+
+**Price aggregators** publish one price per coin, combined from many venues. CoinGecko's API [9] works without a
+key or with a free demo key at 100 calls a minute, with a granularity that depends on the range asked for:
+five-minutely for the last day, hourly up to 90 days, daily beyond. The demo plan reaches back 365 days. I
+compared its last 24 hours of bitcoin prices (to 8 November 00:24 UTC, 288 points) with Binance's BTC/USDT
+one-minute closes. CoinGecko was a median 9.3 basis points lower. The difference is not an error but a currency:
+CoinGecko quotes US dollars, Binance quotes tether, and over that day CoinGecko priced one tether at 0.9992
+dollars. Converting at that rate brings the median difference to −1.1 basis points, with 80% of points within 3.
+The quote currency is part of the price, and a stablecoin is not quite the dollar.
+
+An aggregated price is the right input for valuing a portfolio of a hundred coins. It is the wrong input for
+anything about execution: it describes no order book you could trade against.
+
+**Tick-data vendors** record the exchanges' own feeds and sell the history. Tardis.dev [10] records the WebSocket
+feeds of more than 50 exchanges and sells them both as the original messages, to replay, and as normalized CSV
+files. The first day of every month is free to download without a key, which makes it easy to check. For
+1 November, its Binance BTC/USDT trades file and Binance's own archive held the same 1,147,208 trades, equal in
+ID, microsecond timestamp, price, quantity and side. Its recorder stamps each message on arrival, a median 3 ms
+after the exchange's timestamp: the recorder runs in Tokyo, the region the vendor's documentation gives for
+Binance's own servers [10]. My home connection, for comparison, saw 71 ms.
+
+For trades, then, a vendor sells what the exchange already gives away. What it adds is what the exchange does
+not keep. Binance's spot archive has trades, aggregated trades and candles but no order book, and its REST API
+serves only the book as it is now. Tardis.dev has the BTC/USDT book, every change since 2019, checked with the
+same `U`/`u` sequence numbers as in section 2 while it was recorded [10]. A book that nobody recorded cannot be
+fetched later. Institutional vendors such as Kaiko [11] go further, with reference rates and indices for
+valuation; its indices are administered under the IOSCO principles for financial benchmarks.
+
+## Choosing
+
+| You want | Use |
+| --- | --- |
+| Years of candles or trades for a backtest | the archive, then REST for the days it does not have yet |
+| A dashboard that refreshes every minute | REST, with the rate limit in mind |
+| Every trade, or a live order book | WebSocket, with gap detection and reconnects |
+| The lowest latency, or order entry at scale | FIX or SBE, with the keys and tiers they require |
+| One codebase across many exchanges | ccxt, knowing where it leaks |
+| Prices for many coins, to value a portfolio | a price aggregator, in the currency you report in |
+| Order book history you did not record | a tick-data vendor |
+
+Whatever you choose, reread the documentation now and then. While I was writing this note, OKX's documentation
+said that the API domain depends on the region an account was registered in and that the order-book checksum is
+now always zero; Binance's archive had switched to microseconds at the start of 2025. None of these changes makes
+old code fail loudly.
+
+## References
+
+1. Binance, *Binance Spot API documentation*: REST API, FIX API and SBE market data streams.
+   [github.com/binance/binance-spot-api-docs](https://github.com/binance/binance-spot-api-docs) (accessed 7 November 2026).
+2. Binance, *WebSocket streams* and *Binance public data*.
+   [web-socket-streams.md](https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md);
+   [github.com/binance/binance-public-data](https://github.com/binance/binance-public-data) (accessed 7 November 2026).
+3. OKX, *API v5 documentation*. [okx.com/docs-v5/en](https://www.okx.com/docs-v5/en/) (accessed 7 November 2026).
+4. I. Fette and A. Melnikov, "The WebSocket Protocol," RFC 6455, IETF (December 2011).
+   [doi:10.17487/RFC6455](https://doi.org/10.17487/RFC6455)
+5. M. Nottingham and R. Fielding, "Additional HTTP Status Codes," RFC 6585, IETF (April 2012).
+   [doi:10.17487/RFC6585](https://doi.org/10.17487/RFC6585)
+6. FIX Trading Community, *Simple Binary Encoding (SBE)*.
+   [github.com/FIXTradingCommunity/fix-simple-binary-encoding](https://github.com/FIXTradingCommunity/fix-simple-binary-encoding)
+7. CCXT, *README* and *Manual*, version 4.5.92. [github.com/ccxt/ccxt](https://github.com/ccxt/ccxt);
+   [Manual](https://github.com/ccxt/ccxt/wiki/Manual) (accessed 8 November 2026).
+8. CCXT, *CCXT Pro Manual*. [github.com/ccxt/ccxt/wiki/ccxt.pro.manual](https://github.com/ccxt/ccxt/wiki/ccxt.pro.manual)
+   (accessed 8 November 2026).
+9. CoinGecko, *API documentation*: errors and rate limits, coin historical chart data.
+   [docs.coingecko.com](https://docs.coingecko.com/) (accessed 8 November 2026).
+10. Tardis.dev, *Documentation*: data FAQ, downloadable CSV files, Binance historical data details.
+    [docs.tardis.dev](https://docs.tardis.dev/) (accessed 8 November 2026).
+11. Kaiko, *About Kaiko*. [docs.kaiko.com](https://docs.kaiko.com/getting-started/about-kaiko) (accessed 8 November 2026).
+
+{/* Verified 2026-11-07 against the documents themselves (GitHub raw files, OKX docs page, rfc-editor.org).
+    RFC DOIs follow the RFC Editor's 10.17487/RFCxxxx scheme; checked below.
+    [7]-[11] verified 2026-11-08: ccxt README/Manual/ccxt.pro.manual raw files from GitHub + installed 4.5.92 source
+    (ccxt/pro/binance.py, okx.py); CoinGecko docs .md pages; Tardis.dev docs .md pages; Kaiko docs .md page. */}

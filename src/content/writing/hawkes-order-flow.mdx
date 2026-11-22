@@ -1,0 +1,167 @@
+---
+title: Trades that trigger trades
+description: "Order flow is not a Poisson stream: trades arrive in bursts. A Hawkes process lets each event raise the chance of the next, and its branching ratio measures how much of the flow is reaction rather than news."
+date: 2026-11-07
+topic: Quantitative finance
+tags: [Market microstructure, Point processes]
+slug: hawkes-order-flow
+interactive: true
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import HawkesExplorer from "../../components/HawkesExplorer.astro";
+
+{/*
+  Real data: Binance USD-M UMAUSDT aggregated trades, 2026-02-23 23:57 to 2026-02-24 00:03 UTC, around a funding settlement
+  (rate −1.2785% for that 4-hour interval), from the public archive at data.binance.vision. One event per
+  distinct millisecond (2,657 events). Fits by maximum likelihood in Python (Nelder–Mead on log-parameters).
+*/}
+
+Look at trades on any exchange at the scale of seconds and they do not arrive like raindrops. They come in
+bursts: a large order sweeps the book, algorithms react to it, other algorithms react to those. The standard model
+for "events that make more events" is the Hawkes process [1], best known outside finance through its
+epidemic-type versions for earthquake aftershocks [6].
+
+## From Poisson to self-excitation
+
+A Poisson process has a constant rate: the chance of an event in the next instant ignores the past. A Hawkes
+process lets every event raise the rate for a while:
+
+$$
+\lambda(t) = \mu + \sum_{t_i < t} \alpha\, e^{-\beta (t - t_i)} .
+$$
+
+$\mu$ is the background rate (events caused by something outside the process, such as news), $\alpha$ the jump in
+intensity after each event and $1/\beta$ how long the excitement lasts.
+
+The process has a family-tree reading [2]. Background events are immigrants; each event, immigrant or not, has on
+average
+
+$$
+n = \int_0^\infty \alpha e^{-\beta s}\, ds = \frac{\alpha}{\beta}
+$$
+
+children. $n$ is the **branching ratio**. If $n < 1$ every family dies out and the process is stationary, with
+
+$$
+\mathbb{E}[\text{rate}] = \frac{\mu}{1 - n}, \qquad \text{mean family size} = \frac{1}{1-n} .
+$$
+
+The branching ratio is also the share of events that were triggered by earlier events rather than by the
+background. At $n = 0.9$, nine trades in ten are reactions, and a single outside event sets off ten on average.
+
+<HawkesExplorer />
+
+## Simulating and fitting
+
+**Simulation by thinning** [3, 4]. Between events the intensity only decays, so its current value is an upper
+bound until the next event. Draw a candidate time from a Poisson process at that bound, accept it with probability
+$\lambda(t)/\bar\lambda$, update, repeat.
+
+**Maximum likelihood.** For events $t_1 < \dots < t_N$ on $[0, T]$,
+
+$$
+\ln L = \sum_{i=1}^{N} \ln \lambda(t_i) - \int_0^T \lambda(t)\, dt ,
+$$
+
+and for the exponential kernel the sum has a recursion [5], $A_i = e^{-\beta(t_i - t_{i-1})}(1 + A_{i-1})$ with
+$\lambda(t_i) = \mu + \alpha A_i$, so the likelihood costs one pass over the data.
+
+On a simulated process with $\mu = 1$, $\alpha = 0.8$, $\beta = 1.2$ ($n = 2/3$) over 2,000 seconds, the
+simulation produced 6,076 events (theory: 6,000) and the fit returned $\hat\mu = 1.02$, $\hat\alpha = 0.82$,
+$\hat\beta = 1.23$, $\hat n = 0.66$.
+
+```python title="hawkes.py"
+import numpy as np
+from scipy.optimize import minimize
+
+def simulate(mu, alpha, beta, T, seed=1):
+    rng = np.random.default_rng(seed)
+    t, excess, events = 0.0, 0.0, []
+    while True:
+        bound = mu + excess                      # intensity only decays until the next event
+        wait = rng.exponential(1 / bound)
+        t += wait
+        excess *= np.exp(-beta * wait)
+        if t > T:
+            return np.array(events)
+        if rng.uniform() * bound <= mu + excess:  # accept with probability lambda(t) / bound
+            events.append(t)
+            excess += alpha
+
+def neg_log_likelihood(log_params, t, T):
+    mu, alpha, beta = np.exp(log_params)
+    if alpha >= beta:
+        return np.inf                             # keep the branching ratio below 1
+    A, log_sum = 0.0, 0.0
+    for i in range(len(t)):
+        if i:
+            A = np.exp(-beta * (t[i] - t[i - 1])) * (1 + A)
+        log_sum += np.log(mu + alpha * A)
+    compensator = mu * T + alpha / beta * np.sum(1 - np.exp(-beta * (T - t)))
+    return compensator - log_sum
+
+t = simulate(1.0, 0.8, 1.2, T=2000)
+fit = minimize(neg_log_likelihood, np.log([0.5, 0.5, 1.0]), args=(t, 2000), method="Nelder-Mead")
+mu, alpha, beta = np.exp(fit.x)
+print(f"{len(t)} events; mu {mu:.2f}, alpha {alpha:.2f}, beta {beta:.2f}, branching {alpha / beta:.2f}")
+```
+
+## A real burst
+
+The "Real trades" tab shows six minutes of trades in one perpetual future on Binance, centred on a funding
+settlement where the payment was unusually large (−1.28% for that four-hour interval). For most of the three
+minutes before the settlement the flow ticks along at about three events per second; it picks up in the last
+half-minute, and in the twenty seconds after the settlement there are about ten times as many.
+
+Fitting the model to the whole window gives a branching ratio of $0.67$ and an excitement that decays in about
+$0.16$ seconds. The fit is much better than a Poisson process (the log-likelihood improves by more than a
+thousand), and the time-rescaling check passes [6]: transformed by the fitted intensity, the gaps between events have
+mean 1.00 and variance 0.99, as unit exponentials should.
+
+Fit only the calm three minutes before the settlement and the branching ratio drops to $0.22$, with a decay time
+of about 13 milliseconds.
+
+<Callout label="Read the branching ratio with care">
+Part of the 0.67 is not reflexivity at all. The settlement is an outside clock that lifts the background rate,
+and a model with a constant $\mu$ can only explain the burst by making events excite each other more. A
+branching ratio is a measure of endogeneity only when the background has been modeled honestly; regime shifts
+and outliers are known to push its estimate upward, even toward 1 [8].
+</Callout>
+
+## Where it is used
+
+Hawkes processes appear wherever events beget events: aftershocks after an earthquake, retweets, and in markets,
+models of order arrival and of price jumps that cluster [9], and of how close a market is to instability. Filimonov
+and Sornette used the branching ratio as an index of how much of a market's activity is self-generated [7]; a ratio
+drifting toward 1 means a market that mostly reacts to itself.
+
+## Data
+
+Binance Data Collection, USDⓈ-M futures aggregated trades, [data.binance.vision](https://data.binance.vision/).
+
+## References
+
+1. A. G. Hawkes, "Spectra of some self-exciting and mutually exciting point processes," *Biometrika* 58(1),
+   83–90 (1971). [doi:10.1093/biomet/58.1.83](https://doi.org/10.1093/biomet/58.1.83)
+2. A. G. Hawkes and D. Oakes, "A cluster process representation of a self-exciting process," *Journal of Applied
+   Probability* 11(3), 493–503 (1974). [doi:10.2307/3212693](https://doi.org/10.2307/3212693)
+3. P. A. W. Lewis and G. S. Shedler, "Simulation of nonhomogeneous Poisson processes by thinning," *Naval Research
+   Logistics Quarterly* 26(3), 403–413 (1979). [doi:10.1002/nav.3800260304](https://doi.org/10.1002/nav.3800260304)
+4. Y. Ogata, "On Lewis' simulation method for point processes," *IEEE Transactions on Information Theory* 27(1),
+   23–31 (1981). [doi:10.1109/TIT.1981.1056305](https://doi.org/10.1109/TIT.1981.1056305)
+5. T. Ozaki, "Maximum likelihood estimation of Hawkes' self-exciting point processes," *Annals of the Institute of
+   Statistical Mathematics* 31(1), 145–155 (1979). [doi:10.1007/BF02480272](https://doi.org/10.1007/BF02480272)
+6. Y. Ogata, "Statistical models for earthquake occurrences and residual analysis for point processes," *Journal of
+   the American Statistical Association* 83(401), 9–27 (1988).
+   [doi:10.1080/01621459.1988.10478560](https://doi.org/10.1080/01621459.1988.10478560)
+7. V. Filimonov and D. Sornette, "Quantifying reflexivity in financial markets: toward a prediction of flash
+   crashes," *Physical Review E* 85, 056108 (2012). [doi:10.1103/PhysRevE.85.056108](https://doi.org/10.1103/PhysRevE.85.056108)
+8. V. Filimonov and D. Sornette, "Apparent criticality and calibration issues in the Hawkes self-excited point
+   process model: application to high-frequency financial data," *Quantitative Finance* 15(8), 1293–1314 (2015).
+   [doi:10.1080/14697688.2015.1032544](https://doi.org/10.1080/14697688.2015.1032544)
+9. E. Bacry, I. Mastromatteo and J.-F. Muzy, "Hawkes processes in finance," *Market Microstructure and Liquidity*
+   1(1), 1550005 (2015). [doi:10.1142/S2382626615500057](https://doi.org/10.1142/S2382626615500057)
+
+{/* Verified against Crossref records and the papers' abstracts / full text on 2026-11-07. Ogata (1988) is the
+    standard citation for the epidemic-type (later ETAS) model and for residual analysis by time change. */}

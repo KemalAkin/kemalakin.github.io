@@ -1,0 +1,167 @@
+---
+// Interactive Hawkes process: simulated self-exciting arrivals (Ogata thinning) or real trade arrivals,
+// with the conditional intensity and per-second counts.
+---
+
+<figure class="fig" data-hawkes aria-label="Interactive Hawkes process">
+  <div class="fig-head">
+    <strong>Try it: trades that trigger trades</strong>
+    <span class="seg" data-seg role="group" aria-label="Data">
+      <button type="button" data-mode="sim" aria-pressed="true">Simulated</button>
+      <button type="button" data-mode="real" aria-pressed="false">Real trades</button>
+    </span>
+  </div>
+  <div class="controls" data-show="sim">
+    <div class="ctrl">
+      <label><span>Branching ratio n = α/β</span><span data-out="n"></span></label>
+      <input type="range" data-in="n" min="0" max="0.95" step="0.01" value="0.7" aria-label="Branching ratio" />
+    </div>
+    <div class="ctrl">
+      <label><span>Memory 1/β</span><span data-out="tau"></span></label>
+      <input type="range" data-in="tau" min="0.1" max="5" step="0.1" value="1" aria-label="Decay time" />
+    </div>
+    <div class="ctrl">
+      <label><span>Background rate μ</span><span data-out="mu"></span></label>
+      <input type="range" data-in="mu" min="0.2" max="3" step="0.1" value="1" aria-label="Background rate" />
+    </div>
+    <div class="ctrl" style="align-self:end">
+      <button class="fig-btn" type="button" data-rerun style="justify-self:start">Re-run</button>
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label">Branching ratio</span><span class="v" data-out="rn">–</span></div>
+    <div><span class="label">Events / second</span><span class="v" data-out="rate">–</span></div>
+    <div><span class="label">Mean cluster size</span><span class="v hot" data-out="cluster">–</span></div>
+    <div><span class="label">Variance / mean of 1-s counts</span><span class="v" data-out="fano">–</span></div>
+  </div>
+  <div class="plot short"><canvas role="img" aria-label="Event times, intensity and counts per second"></canvas></div>
+  <figcaption class="fig-foot" data-foot></figcaption>
+</figure>
+
+<script>
+  import { $in, $out, axes, fit, label, line, mount, rng, segmented } from "../scripts/figure";
+  import trades from "../data/notes/uma-trades.json";
+
+  const TSIM = 120;
+  // Exponential-kernel Hawkes fitted by maximum likelihood to the full 360-second window (note's Python check).
+  const FIT = { mu: 2.459, alpha: 4.095, beta: 6.141 };
+
+  function simulate(mu: number, alpha: number, beta: number, T: number, seed: number): number[] {
+    const r = rng(seed);
+    const ev: number[] = [];
+    let t = 0, ex = 0;
+    while (ev.length < 20000) {
+      const bar = mu + ex;
+      const wait = -Math.log(1 - r()) / bar;
+      t += wait;
+      ex *= Math.exp(-beta * wait);
+      if (t > T) break;
+      if (r() * bar <= mu + ex) {
+        ev.push(t);
+        ex += alpha;
+      }
+    }
+    return ev;
+  }
+
+  mount("data-hawkes", (root, env) => {
+    const canvas = root.querySelector("canvas")!;
+    let seed = 5;
+    const real = (trades.t as number[]).map((x) => x + 180);
+    const mode = segmented(root, () => draw());
+
+    function draw() {
+      const C = env.C;
+      const isReal = mode() === "real";
+      let mu: number, alpha: number, beta: number, ev: number[], T: number;
+      if (isReal) {
+        ({ mu, alpha, beta } = FIT);
+        ev = real;
+        T = 360;
+      } else {
+        const n = +$in(root, "n").value, tau = +$in(root, "tau").value;
+        mu = +$in(root, "mu").value;
+        beta = 1 / tau;
+        alpha = n * beta;
+        T = TSIM;
+        ev = simulate(mu, alpha, beta, T, seed);
+        $out(root, "n").textContent = n.toFixed(2);
+        $out(root, "tau").textContent = tau.toFixed(1) + " s";
+        $out(root, "mu").textContent = mu.toFixed(1) + " / s";
+      }
+      const n = alpha / beta;
+
+      // intensity on a grid
+      const G = 900;
+      const lam = new Float64Array(G + 1);
+      let j = 0, ex = 0, last = 0;
+      for (let g = 0; g <= G; g++) {
+        const t = (g / G) * T;
+        while (j < ev.length && ev[j] <= t) {
+          ex = ex * Math.exp(-beta * (ev[j] - last)) + alpha;
+          last = ev[j];
+          j++;
+        }
+        lam[g] = mu + ex * Math.exp(-beta * (t - last));
+      }
+      // per-second counts
+      const counts = new Array(Math.ceil(T)).fill(0);
+      for (const t of ev) counts[Math.min(counts.length - 1, Math.floor(t))]++;
+      const m = counts.reduce((a, b) => a + b, 0) / counts.length;
+      const v = counts.reduce((a, c) => a + (c - m) ** 2, 0) / counts.length;
+
+      const { ctx, w, h } = fit(canvas);
+      ctx.clearRect(0, 0, w, h);
+      const top = { x0: 52, x1: w - 12, y0: 22, y1: h * 0.5 };
+      const fmtT = (s: number) => (isReal ? (s - 180 === 0 ? "00:00" : (s - 180 > 0 ? "+" : "") + (s - 180) + " s") : s + " s");
+      const xt = isReal ? [0, 60, 120, 180, 240, 300, 360] : [0, 20, 40, 60, 80, 100, 120];
+      let lmax = 0;
+      lam.forEach((x) => (lmax = Math.max(lmax, x)));
+      lmax = Math.min(lmax, isReal ? 400 : 200);
+      const A = axes(ctx, C, top, { lo: 0, hi: T, ticks: xt, fmt: fmtT }, { lo: 0, hi: lmax * 1.1, label: "intensity λ(t), events / s" });
+      ctx.strokeStyle = C.accent;
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth = 1;
+      for (const t of ev) {
+        const x = Math.round(A.X(t)) + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x, top.y1);
+        ctx.lineTo(x, top.y1 - 10);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      const pts: [number, number][] = [];
+      for (let g = 0; g <= G; g++) pts.push([A.X((g / G) * T), A.Y(Math.min(lmax * 1.1, lam[g]))]);
+      line(ctx, pts, C.fg, 1.2);
+      line(ctx, [[top.x0, A.Y(mu)], [top.x1, A.Y(mu)]], C.muted, 1, [3, 4]);
+      label(ctx, "background μ", top.x1 - 4, A.Y(mu) - 9, C.muted, "right");
+
+      const bot = { x0: 52, x1: w - 12, y0: h * 0.5 + 40, y1: h - 30 };
+      const cmax = Math.max(...counts, 1);
+      const B = axes(ctx, C, bot, { lo: 0, hi: T, ticks: xt, fmt: fmtT }, { lo: 0, hi: cmax * 1.1, label: "events per second" });
+      const bw = (bot.x1 - bot.x0) / counts.length;
+      counts.forEach((c, i) => {
+        ctx.fillStyle = c > m + 2 * Math.sqrt(m) ? C.warm : C.accent;
+        ctx.globalAlpha = 0.6;
+        ctx.fillRect(bot.x0 + i * bw + (bw > 3 ? 0.5 : 0), B.Y(c), Math.max(1, bw - (bw > 3 ? 1 : 0)), bot.y1 - B.Y(c));
+      });
+      ctx.globalAlpha = 1;
+      line(ctx, [[bot.x0, B.Y(m)], [bot.x1, B.Y(m)]], C.fg, 1, [4, 4]);
+      label(ctx, "mean", bot.x1 - 4, B.Y(m) - 9, C.fg, "right");
+
+      $out(root, "rn").textContent = n.toFixed(2);
+      $out(root, "rate").innerHTML = `${(ev.length / T).toFixed(1)} <small>model ${(mu / (1 - n)).toFixed(1)}</small>`;
+      $out(root, "cluster").textContent = (1 / (1 - n)).toFixed(1);
+      $out(root, "fano").innerHTML = `${(v / m).toFixed(1)} <small>Poisson 1.0</small>`;
+      root.querySelector("[data-foot]")!.textContent = isReal
+        ? `UMAUSDT perpetual on Binance, aggregated trades from 23:57 to 00:03 UTC around the 2026-02-24 funding time; one event per distinct millisecond (data.binance.vision). Intensity from a Hawkes fit to the whole window: μ ${FIT.mu}/s, α ${FIT.alpha}/s, β ${FIT.beta}/s.`
+        : `${ev.length} events over ${TSIM} s, simulated by thinning. Same seed while you drag; Re-run draws a new one.`;
+    }
+
+    root.querySelector("[data-rerun]")!.addEventListener("click", () => {
+      seed = (seed * 48271) % 2147483647;
+      draw();
+    });
+    return { draw };
+  });
+</script>

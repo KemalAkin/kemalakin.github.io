@@ -1,0 +1,119 @@
+---
+// Interactive Black–Scholes as a heat equation: an explicit finite-difference solution against the closed form
+// and a Monte Carlo estimate, with a λ slider that crosses the stability limit.
+---
+
+<figure class="fig" data-heat aria-label="Interactive option pricing on a heat-equation grid">
+  <div class="fig-head">
+    <strong>Try it: one call price, three ways</strong>
+    <span class="label" style="text-transform:none;letter-spacing:0">strike 110 · rate 3%</span>
+  </div>
+  <div class="controls">
+    <div class="ctrl">
+      <label><span>Time to expiry</span><span data-out="T"></span></label>
+      <input type="range" data-in="T" min="0.02" max="1" step="0.01" value="0.5" aria-label="Time to expiry in years" />
+    </div>
+    <div class="ctrl">
+      <label><span>Volatility σ</span><span data-out="sigma"></span></label>
+      <input type="range" data-in="sigma" min="0.1" max="1" step="0.01" value="0.6" aria-label="Volatility" />
+    </div>
+    <div class="ctrl">
+      <label><span>Grid step ratio λ</span><span data-out="lam"></span></label>
+      <input type="range" data-in="lam" min="0.3" max="0.6" step="0.005" value="0.45" aria-label="Explicit scheme ratio lambda" />
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label">Closed form</span><span class="v" data-out="cf">–</span></div>
+    <div><span class="label">Heat grid</span><span class="v hot" data-out="fd">–</span></div>
+    <div><span class="label">Monte Carlo</span><span class="v" data-out="mc">–</span></div>
+    <div><span class="label">Grid steps</span><span class="v" data-out="steps">–</span></div>
+  </div>
+  <div class="plot short"><canvas role="img" aria-label="Option value against spot price"></canvas></div>
+  <figcaption class="fig-foot">Readouts at spot 100. Curve: closed form; dots: the explicit heat-equation grid (161 points in log-price); dashed: the payoff at expiry. Monte Carlo uses 20,000 draws.</figcaption>
+</figure>
+
+<script>
+  import { $in, $out, axes, bsCall, fit, label, line, mount, normals } from "../scripts/figure";
+
+  const K = 110, R = 0.03, S0 = 100, NX = 161, XLO = Math.log(20), XHI = Math.log(500);
+  const MC = 20_000;
+
+  /** Explicit scheme for u_τ = ½σ²u_xx; returns the call value V(S) by undoing the change of variables. */
+  function grid(T: number, s: number, lamTarget: number) {
+    const dx = (XHI - XLO) / (NX - 1);
+    const steps = Math.max(1, Math.ceil(T / ((2 * lamTarget * dx * dx) / (s * s))));
+    const dtau = T / steps;
+    const lam = (0.5 * s * s * dtau) / (dx * dx);
+    let u = new Float64Array(NX), nu = new Float64Array(NX);
+    for (let i = 0; i < NX; i++) u[i] = Math.max(Math.exp(XLO + i * dx) - K, 0);
+    for (let n = 0; n < steps; n++) {
+      const tau = (n + 1) * dtau;
+      for (let i = 1; i < NX - 1; i++) nu[i] = u[i] + lam * (u[i + 1] - 2 * u[i] + u[i - 1]);
+      nu[0] = 0;
+      nu[NX - 1] = Math.exp(XHI + 0.5 * s * s * tau) - K; // deep in the money
+      [u, nu] = [nu, u];
+    }
+    const value = (S: number) => {
+      const x = Math.log(S) + (R - 0.5 * s * s) * T;
+      const f = (x - XLO) / dx;
+      const i = Math.min(NX - 2, Math.max(0, Math.floor(f)));
+      const t = f - i;
+      return Math.exp(-R * T) * (u[i] * (1 - t) + u[i + 1] * t);
+    };
+    return { value, steps, lam };
+  }
+
+  mount("data-heat", (root, env) => {
+    const canvas = root.querySelector("canvas")!;
+    const Z = normals(41, MC);
+
+    function draw() {
+      const C = env.C;
+      const T = +$in(root, "T").value, s = +$in(root, "sigma").value, lamT = +$in(root, "lam").value;
+      const g = grid(T, s, lamT);
+      const unstable = g.lam > 0.5;
+      const { ctx, w, h } = fit(canvas);
+      ctx.clearRect(0, 0, w, h);
+      const box = { x0: 52, x1: w - 14, y0: 22, y1: h - 32 };
+      const Smin = 40, Smax = 200, Vmax = 100;
+      const A = axes(ctx, C, box, { lo: Smin, hi: Smax, ticks: [40, 70, 100, 110, 140, 170, 200], label: "spot price" }, { lo: 0, hi: Vmax, ticks: [0, 25, 50, 75, 100], label: "call value" });
+      line(ctx, [[A.X(Smin), A.Y(0)], [A.X(K), A.Y(0)], [A.X(Smax), A.Y(Smax - K)]].map(([x, y]) => [x, Math.max(box.y0, y)] as [number, number]), C.muted, 1.2, [5, 4]);
+      const cf: [number, number][] = [];
+      for (let i = 0; i <= 160; i++) {
+        const S = Smin + ((Smax - Smin) * i) / 160;
+        cf.push([A.X(S), A.Y(Math.min(Vmax, bsCall(S, K, T, R, s)))]);
+      }
+      line(ctx, cf, C.fg, 1.6);
+      ctx.fillStyle = unstable ? C.warm : C.accent;
+      for (let i = 0; i <= 40; i++) {
+        const S = Smin + ((Smax - Smin) * i) / 40;
+        let v = g.value(S);
+        if (!isFinite(v)) v = Vmax * (i % 2 ? 1 : 0);
+        const y = A.Y(Math.max(0, Math.min(Vmax, v)));
+        ctx.beginPath();
+        ctx.arc(A.X(S), y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      line(ctx, [[A.X(S0), box.y0], [A.X(S0), box.y1]], C.line, 1);
+      if (unstable) label(ctx, "λ > ½: the grid blows up", box.x0 + 8, box.y0 + 8, C.warm);
+
+      // Monte Carlo at S0
+      let sum = 0, sum2 = 0;
+      const drift = (R - 0.5 * s * s) * T, vol = s * Math.sqrt(T);
+      for (let i = 0; i < MC; i++) {
+        const p = Math.max(S0 * Math.exp(drift + vol * Z[i]) - K, 0);
+        sum += p; sum2 += p * p;
+      }
+      const mean = sum / MC, se = Math.sqrt((sum2 / MC - mean * mean) / MC);
+      const fd = g.value(S0);
+      $out(root, "T").textContent = T < 0.1 ? Math.round(T * 365) + " days" : T.toFixed(2) + " yr";
+      $out(root, "sigma").textContent = Math.round(s * 100) + "%";
+      $out(root, "lam").textContent = g.lam.toFixed(3) + (unstable ? " unstable" : "");
+      $out(root, "cf").textContent = bsCall(S0, K, T, R, s).toFixed(2);
+      $out(root, "fd").textContent = !isFinite(fd) || Math.abs(fd) > 1e6 ? (isFinite(fd) ? fd.toExponential(1) : "overflow") : fd.toFixed(2);
+      $out(root, "mc").innerHTML = `${(Math.exp(-R * T) * mean).toFixed(2)} <small>± ${(Math.exp(-R * T) * se).toFixed(2)}</small>`;
+      $out(root, "steps").textContent = String(g.steps);
+    }
+    return { draw };
+  });
+</script>

@@ -1,0 +1,147 @@
+---
+// Poll or stream: replays recorded BTC/USDT trades against a REST poller (interval, page size) and
+// compares what it sees with the WebSocket stream recorded at the same time.
+---
+
+<figure class="fig" data-polling aria-label="Interactive comparison of polling and streaming">
+  <div class="fig-head">
+    <strong>Try it: poll the trades endpoint, or stream it?</strong>
+  </div>
+  <div class="controls">
+    <div class="ctrl">
+      <label><span>Poll every</span><span data-out="dt"></span></label>
+      <input type="range" data-in="dt" min="0" max="8" step="1" value="3" aria-label="Polling interval" />
+    </div>
+    <div class="ctrl">
+      <label><span>Trades per request (limit)</span><span data-out="lim"></span></label>
+      <input type="range" data-in="lim" min="0" max="3" step="1" value="0" aria-label="Trades returned per request" />
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label">Median delay, polling</span><span class="v hot" data-out="poll">–</span></div>
+    <div><span class="label">Median delay, stream</span><span class="v" data-out="stream">–</span></div>
+    <div><span class="label">Trades never seen</span><span class="v" data-out="miss">–</span></div>
+    <div><span class="label">Request weight / min</span><span class="v" data-out="weight">–</span></div>
+  </div>
+  <div class="plot"><canvas role="img" aria-label="Trades per second over the recording and a zoom on the busiest seconds with poll times"></canvas></div>
+  <figcaption class="fig-foot" data-foot></figcaption>
+</figure>
+
+<script>
+  import { $in, $out, axes, fit, label, line, mount } from "../scripts/figure";
+  import cap from "../data/notes/btc-trades-capture.json";
+
+  const STEPS = [0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60];
+  const LIMITS = [100, 250, 500, 1000];   // the endpoint's maximum is 1000
+  const WEIGHT = 25;          // GET /api/v3/trades
+  const BUDGET = 6000;        // REQUEST_WEIGHT per minute per IP
+
+  // trade times in ms since the start of the recording (delta-encoded in the file)
+  const T: number[] = [];
+  (cap.dt as number[]).reduce((acc, d) => (T.push(acc + d), acc + d), 0);
+  const LAT = cap.lat as number[];
+  const DUR = cap.dur_s * 1000;
+  const HALF_RTT = cap.rtt_ms / 2;
+
+  const median = (a: number[]) => {
+    if (!a.length) return NaN;
+    const s = Float64Array.from(a).sort();
+    return s[Math.floor(s.length / 2)];
+  };
+  const ms = (v: number) => (v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + " s" : Math.round(v) + " ms");
+
+  // busiest ZOOM-second window, for the lower panel
+  const ZOOM = 20000;
+  let zStart = 0;
+  {
+    let best = -1, j = 0;
+    for (let i = 0; i < T.length; i++) {
+      while (T[i] - T[j] > ZOOM) j++;
+      if (i - j > best) { best = i - j; zStart = Math.max(0, T[i] - ZOOM); }
+    }
+  }
+
+  mount("data-polling", (root, env) => {
+    const canvas = root.querySelector("canvas")!;
+
+    function draw() {
+      const C = env.C;
+      const dt = STEPS[+$in(root, "dt").value] * 1000;
+      const lim = LIMITS[+$in(root, "lim").value];
+      // replay: at each poll time the endpoint returns the `lim` most recent trades
+      const seen = new Uint8Array(T.length);
+      const delays: number[] = [];
+      let i = 0;
+      for (let p = dt; p <= DUR + dt; p += dt) {
+        const a = i;
+        while (i < T.length && T[i] <= p) i++;
+        for (let k = Math.max(a, i - lim); k < i; k++) {
+          seen[k] = 1;
+          delays.push(p - T[k] + HALF_RTT);
+        }
+      }
+      const missed = T.length - delays.length;
+      const wpm = (60000 / dt) * WEIGHT;
+
+      const { ctx, w, h } = fit(canvas);
+      ctx.clearRect(0, 0, w, h);
+
+      // top: trades per second over the whole recording, missed share in warm
+      const top = { x0: 48, x1: w - 12, y0: 22, y1: h * 0.4 };
+      const secs = Math.ceil(DUR / 1000);
+      const all = new Array(secs).fill(0), lost = new Array(secs).fill(0);
+      T.forEach((t, k) => { const s = Math.min(secs - 1, Math.floor(t / 1000)); all[s]++; if (!seen[k]) lost[s]++; });
+      // square-root scale: one burst of hundreds of trades would otherwise flatten every other second
+      const peak = Math.max(...all, 1);
+      const A = axes(ctx, C, top, { lo: 0, hi: secs, ticks: Array.from({ length: Math.ceil(secs / 300) }, (_, k) => k * 300), fmt: (v) => `${v / 60} min` },
+        { lo: 0, hi: Math.sqrt(peak * 1.1), ticks: [0, 25, 100, 200, 400].filter((v) => v <= peak * 1.1).map(Math.sqrt), fmt: (v) => String(Math.round(v * v)), label: "trades per second (square-root scale)" });
+      const bw = Math.max(1, (top.x1 - top.x0) / secs);
+      for (let s = 0; s < secs; s++) {
+        if (!all[s]) continue;
+        ctx.fillStyle = C.accent; ctx.globalAlpha = 0.55;
+        ctx.fillRect(A.X(s), A.Y(Math.sqrt(all[s])), bw, top.y1 - A.Y(Math.sqrt(all[s])));
+        if (lost[s]) { ctx.fillStyle = C.warm; ctx.globalAlpha = 0.9; ctx.fillRect(A.X(s), A.Y(Math.sqrt(lost[s])), bw, top.y1 - A.Y(Math.sqrt(lost[s]))); }
+      }
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = C.muted; ctx.setLineDash([3, 3]);
+      ctx.strokeRect(A.X(zStart / 1000), top.y0, A.X((zStart + ZOOM) / 1000) - A.X(zStart / 1000), top.y1 - top.y0);
+      ctx.setLineDash([]);
+
+      // bottom: the busiest 20 seconds, one tick per trade, dashed lines at poll times
+      const bot = { x0: 48, x1: w - 12, y0: h * 0.4 + 48, y1: h - 34 };
+      const B = axes(ctx, C, bot, { lo: 0, hi: ZOOM, ticks: [0, 5000, 10000, 15000, 20000], fmt: (v) => `${v / 1000} s` },
+        { lo: 0, hi: 1, ticks: [], label: "" });
+      for (let p = Math.ceil(zStart / dt) * dt; p <= zStart + ZOOM; p += dt) {
+        if (dt < 250 && p !== Math.ceil(zStart / dt) * dt) break;
+        line(ctx, [[B.X(p - zStart), bot.y0], [B.X(p - zStart), bot.y1]], C.muted, 1, [3, 4]);
+      }
+      if (dt < 250) label(ctx, "polls too dense to draw", bot.x1, bot.y0 - 10, C.muted, "right");
+      else label(ctx, "poll", B.X(Math.ceil(zStart / dt) * dt - zStart) + 4, bot.y0 + 8, C.muted);
+      T.forEach((t, k) => {
+        if (t < zStart || t > zStart + ZOOM) return;
+        const x = B.X(t - zStart);
+        const y = bot.y0 + 18 + ((k * 0.618) % 1) * (bot.y1 - bot.y0 - 26);
+        ctx.fillStyle = seen[k] ? C.accent : C.warm;
+        ctx.globalAlpha = seen[k] ? 0.7 : 1;
+        ctx.fillRect(x - 1, y - 3, 2, 6);
+      });
+      ctx.globalAlpha = 1;
+      label(ctx, "busiest 20 seconds:", bot.x0, bot.y0 - 10, C.muted);
+      label(ctx, "■ seen", bot.x0 + 150, bot.y0 - 10, C.accent);
+      label(ctx, "■ never seen", bot.x0 + 210, bot.y0 - 10, C.warm);
+
+      $out(root, "dt").textContent = ms(dt);
+      $out(root, "lim").textContent = String(lim);
+      $out(root, "poll").textContent = ms(median(delays));
+      $out(root, "stream").textContent = ms(median(LAT));
+      $out(root, "miss").textContent = missed ? `${((missed / T.length) * 100).toFixed(missed / T.length < 0.01 ? 2 : 1)}%` : "0";
+      const wEl = $out(root, "weight");
+      wEl.innerHTML = `${Math.round(wpm).toLocaleString("en-US")} <small>of ${BUDGET.toLocaleString("en-US")}</small>`;
+      wEl.classList.toggle("hot", wpm > BUDGET);
+      root.querySelector("[data-foot]")!.textContent =
+        `${T.length.toLocaleString("en-US")} Binance BTCUSDT spot trades recorded from the public trade stream, ${cap.label}. ` +
+        `Polling is replayed against the recording; "delay" is trade time to arrival, with half of a measured ${Math.round(cap.rtt_ms)} ms round trip added for the response.`;
+    }
+    return { draw };
+  });
+</script>

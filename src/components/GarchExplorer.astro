@@ -1,0 +1,163 @@
+---
+// Interactive GARCH(1,1): a simulated (or real BTC) daily return series with the model's ±2σ band, and the
+// autocorrelation of returns and squared returns against the model's prediction.
+---
+
+<figure class="fig" data-garch aria-label="Interactive GARCH volatility model">
+  <div class="fig-head">
+    <strong>Try it: how hard news hits, how long it lingers</strong>
+    <span class="seg" data-seg role="group" aria-label="Data">
+      <button type="button" data-mode="sim" aria-pressed="true">Simulated</button>
+      <button type="button" data-mode="btc" aria-pressed="false">BTC daily</button>
+    </span>
+  </div>
+  <div class="controls">
+    <div class="ctrl">
+      <label><span>News impact α</span><span data-out="alpha"></span></label>
+      <input type="range" data-in="alpha" min="0" max="0.3" step="0.005" value="0.1" aria-label="Alpha" />
+    </div>
+    <div class="ctrl">
+      <label><span>Memory β</span><span data-out="beta"></span></label>
+      <input type="range" data-in="beta" min="0.5" max="0.99" step="0.005" value="0.85" aria-label="Beta" />
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label">Persistence α+β</span><span class="v" data-out="pers">–</span></div>
+    <div><span class="label">Shock half-life</span><span class="v" data-out="hl">–</span></div>
+    <div><span class="label">Kurtosis</span><span class="v hot" data-out="kurt">–</span></div>
+    <div><span class="label" data-out="r4l">Lag-1 corr of r²</span><span class="v" data-out="r4">–</span></div>
+  </div>
+  <div class="plot"><canvas role="img" aria-label="Daily returns with a volatility band, and autocorrelation bars"></canvas></div>
+  <figcaption class="fig-foot" data-foot></figcaption>
+</figure>
+
+<script>
+  import { $in, $out, acf, axes, fit, label, line, mount, normals, segmented, type Box } from "../scripts/figure";
+  import btc from "../data/notes/btc-daily.json";
+
+  const NSIM = 1500, LAGS = 30, ANNUAL_SIM = 0.6;
+  // Maximum-likelihood fit (normal shocks) on the same BTC series, from the note's Python check.
+  const FIT = { alpha: 0.111, beta: 0.82 };
+
+  mount("data-garch", (root, env) => {
+    const canvas = root.querySelector("canvas")!;
+    const Z = normals(23, NSIM);
+    const closes = btc.close as number[];
+    const rb = new Float64Array(closes.length - 1);
+    for (let i = 1; i < closes.length; i++) rb[i - 1] = Math.log(closes[i] / closes[i - 1]);
+    let mb = 0;
+    rb.forEach((v) => (mb += v));
+    mb /= rb.length;
+    let vb = 0;
+    rb.forEach((v) => (vb += (v - mb) ** 2));
+    vb /= rb.length;
+
+    const mode = segmented(root, (m) => {
+      $in(root, "alpha").value = String(m === "btc" ? FIT.alpha : 0.1);
+      $in(root, "beta").value = String(m === "btc" ? FIT.beta : 0.85);
+      draw();
+    });
+
+    function draw() {
+      const C = env.C;
+      const a = +$in(root, "alpha").value;
+      const bIn = +$in(root, "beta").value;
+      const b = Math.min(bIn, 0.995 - a);
+      const p = a + b;
+      const real = mode() === "btc";
+      const longVar = real ? vb : ANNUAL_SIM ** 2 / 365;
+      const omega = longVar * (1 - p);
+
+      // series and conditional variance
+      let r: Float64Array;
+      const v = new Float64Array(real ? rb.length : NSIM);
+      if (real) {
+        r = rb.map((x) => x - mb);
+        v[0] = longVar;
+        for (let t = 1; t < r.length; t++) v[t] = omega + a * r[t - 1] ** 2 + b * v[t - 1];
+      } else {
+        r = new Float64Array(NSIM);
+        v[0] = longVar;
+        for (let t = 0; t < NSIM; t++) {
+          if (t > 0) v[t] = omega + a * r[t - 1] ** 2 + b * v[t - 1];
+          r[t] = Math.sqrt(v[t]) * Z[t];
+        }
+      }
+      const n = r.length;
+
+      const { ctx, w, h } = fit(canvas);
+      ctx.clearRect(0, 0, w, h);
+      const top: Box = { x0: 52, x1: w - 12, y0: 20, y1: h * 0.52 };
+      let lim = 0;
+      for (const x of r) lim = Math.max(lim, Math.abs(x));
+      lim *= 1.05;
+      const dates = btc.dates as string[];
+      const yearTicks: number[] = [];
+      if (real) dates.forEach((d, i) => { if (i > 0 && d.endsWith("-01-01")) yearTicks.push(i - 1); });
+      const A = axes(ctx, C, top,
+        { lo: 0, hi: n - 1, ticks: real ? yearTicks : [0, 250, 500, 750, 1000, 1250, 1500], fmt: (i) => (real ? dates[i + 1].slice(0, 4) : String(i)), label: real ? "" : "day" },
+        { lo: -lim, hi: lim, ticks: [-0.2, -0.1, 0, 0.1, 0.2].filter((x) => Math.abs(x) < lim), fmt: (x) => (x * 100).toFixed(0) + "%", label: "daily return" });
+      // ±2σ band
+      ctx.fillStyle = C.accent;
+      ctx.globalAlpha = 0.16;
+      ctx.beginPath();
+      for (let t = 0; t < n; t++) ctx.lineTo(A.X(t), A.Y(2 * Math.sqrt(v[t])));
+      for (let t = n - 1; t >= 0; t--) ctx.lineTo(A.X(t), A.Y(-2 * Math.sqrt(v[t])));
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = Math.max(0.6, (top.x1 - top.x0) / n);
+      let outside = 0;
+      for (let t = 0; t < n; t++) {
+        const big = Math.abs(r[t]) > 2 * Math.sqrt(v[t]);
+        if (big) outside++;
+        ctx.strokeStyle = big ? C.warm : C.fg;
+        ctx.globalAlpha = big ? 0.95 : 0.45;
+        ctx.beginPath();
+        ctx.moveTo(A.X(t), A.Y(0));
+        ctx.lineTo(A.X(t), A.Y(r[t]));
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // autocorrelations
+      const ar = acf(r, LAGS);
+      const r2 = r.map((x) => x * x);
+      const ar2 = acf(r2, LAGS);
+      const rho1 = (a * (1 - a * b - b * b)) / (1 - 2 * a * b - b * b);
+      const bot: Box = { x0: 52, x1: w - 12, y0: h * 0.52 + 44, y1: h - 30 };
+      const ymax = Math.max(0.3, ...ar2, rho1) * 1.1;
+      const B = axes(ctx, C, bot, { lo: 0, hi: LAGS + 1, ticks: [1, 5, 10, 15, 20, 25, 30], label: "lag (days)" },
+        { lo: -0.1, hi: ymax, ticks: [0, 0.1, 0.2, 0.3, 0.4].filter((x) => x <= ymax), fmt: (x) => x.toFixed(1), label: "autocorrelation" });
+      const bw = Math.max(2, ((bot.x1 - bot.x0) / (LAGS + 1)) * 0.32);
+      for (let k = 1; k <= LAGS; k++) {
+        ctx.fillStyle = C.muted;
+        ctx.fillRect(B.X(k) - bw - 1, Math.min(B.Y(0), B.Y(ar[k - 1])), bw, Math.abs(B.Y(ar[k - 1]) - B.Y(0)));
+        ctx.fillStyle = C.accent;
+        ctx.fillRect(B.X(k) + 1, Math.min(B.Y(0), B.Y(ar2[k - 1])), bw, Math.abs(B.Y(ar2[k - 1]) - B.Y(0)));
+      }
+      const model: [number, number][] = [];
+      for (let k = 1; k <= LAGS; k++) model.push([B.X(k) + 1 + bw / 2, B.Y(rho1 * p ** (k - 1))]);
+      line(ctx, model, C.fg, 1.4);
+      label(ctx, "■ returns", bot.x1 - 190, bot.y0 + 6, C.muted);
+      label(ctx, "■ squared returns", bot.x1 - 112, bot.y0 + 6, C.accent);
+      label(ctx, "— model", bot.x1 - 112, bot.y0 + 22, C.fg);
+
+      // readouts
+      let m4 = 0, m2 = 0;
+      for (const x of r) { m2 += x * x; m4 += x ** 4; }
+      m2 /= n; m4 /= n;
+      const kTheory = 1 - p * p - 2 * a * a > 0 ? (3 * (1 - p * p)) / (1 - p * p - 2 * a * a) : Infinity;
+      $out(root, "alpha").textContent = a.toFixed(3);
+      $out(root, "beta").textContent = b.toFixed(3) + (b < bIn ? " (capped)" : "");
+      $out(root, "pers").textContent = p.toFixed(3);
+      $out(root, "hl").textContent = (Math.log(0.5) / Math.log(p)).toFixed(1) + " days";
+      $out(root, "kurt").innerHTML = `${(m4 / (m2 * m2)).toFixed(2)} <small>model ${isFinite(kTheory) ? kTheory.toFixed(2) : "∞"}</small>`;
+      $out(root, "r4").innerHTML = `${ar2[0].toFixed(3)} <small>model ${rho1.toFixed(3)}</small>`;
+      root.querySelector("[data-foot]")!.textContent = real
+        ? `Binance BTCUSDT perpetual daily closes, ${dates[0]} to ${dates[dates.length - 1]} (data.binance.vision). Sliders start at the maximum-likelihood fit; the band uses the long-run variance of the data. ${outside} days fall outside ±2σ.`
+        : `${NSIM} simulated days with normal shocks, long-run volatility 60% a year. ${outside} days fall outside ±2σ.`;
+    }
+    return { draw };
+  });
+</script>

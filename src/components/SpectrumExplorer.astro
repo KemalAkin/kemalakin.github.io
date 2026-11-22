@@ -1,0 +1,181 @@
+---
+// Interactive random-matrix spectrum: eigenvalues of a sample correlation matrix against the Marchenko–Pastur
+// law, for simulated returns (noise plus an optional market factor) or 100 crypto perpetuals.
+---
+
+<figure class="fig" data-spectrum aria-label="Interactive correlation-matrix spectrum">
+  <div class="fig-head">
+    <strong>Try it: which eigenvalues are signal?</strong>
+    <span class="seg" data-seg role="group" aria-label="Data">
+      <button type="button" data-mode="sim" aria-pressed="true">Simulated</button>
+      <button type="button" data-mode="real" aria-pressed="false">100 crypto perps</button>
+    </span>
+  </div>
+  <div class="controls" data-show="sim">
+    <div class="ctrl">
+      <label><span>Assets / days, q = N/T</span><span data-out="q"></span></label>
+      <input type="range" data-in="q" min="0.1" max="0.9" step="0.05" value="0.4" aria-label="Ratio of assets to observations" />
+    </div>
+    <div class="ctrl">
+      <label><span>Market factor (pairwise corr.)</span><span data-out="rho"></span></label>
+      <input type="range" data-in="rho" min="0" max="0.5" step="0.01" value="0" aria-label="Market factor strength" />
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label">Noise edge λ₊</span><span class="v" data-out="edge">–</span></div>
+    <div><span class="label">Eigenvalues above</span><span class="v hot" data-out="above">–</span></div>
+    <div><span class="label">Largest</span><span class="v" data-out="top">–</span></div>
+    <div><span class="label">Smallest vs λ₋</span><span class="v" data-out="low">–</span></div>
+  </div>
+  <div class="plot short"><canvas role="img" aria-label="Histogram of eigenvalues with the Marchenko–Pastur density"></canvas></div>
+  <figcaption class="fig-foot" data-foot></figcaption>
+</figure>
+
+<script>
+  import { $in, $out, axes, fit, label, line, mount, normals, segmented } from "../scripts/figure";
+  import spec from "../data/notes/crypto-spectrum.json";
+
+  const N = 100, TMAX = 1000;
+
+  /** Eigenvalues of a symmetric matrix (cyclic Jacobi rotations). `a` is n×n row-major and is overwritten. */
+  function eigenvalues(a: Float64Array, n: number): number[] {
+    for (let sweep = 0; sweep < 30; sweep++) {
+      let off = 0;
+      for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) off += a[p * n + q] ** 2;
+      if (off < 1e-18) break;
+      for (let p = 0; p < n - 1; p++) {
+        for (let q = p + 1; q < n; q++) {
+          const apq = a[p * n + q];
+          if (Math.abs(apq) < 1e-14) continue;
+          const theta = (a[q * n + q] - a[p * n + p]) / (2 * apq);
+          const t = Math.sign(theta || 1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+          const c = 1 / Math.sqrt(t * t + 1), s = t * c;
+          for (let k = 0; k < n; k++) {
+            const akp = a[k * n + p], akq = a[k * n + q];
+            a[k * n + p] = c * akp - s * akq;
+            a[k * n + q] = s * akp + c * akq;
+          }
+          for (let k = 0; k < n; k++) {
+            const apk = a[p * n + k], aqk = a[q * n + k];
+            a[p * n + k] = c * apk - s * aqk;
+            a[q * n + k] = s * apk + c * aqk;
+          }
+        }
+      }
+    }
+    return Array.from({ length: n }, (_, i) => a[i * n + i]).sort((x, y) => y - x);
+  }
+
+  /** Sample correlation matrix of T observations of N series built as √ρ·market + √(1−ρ)·noise. */
+  function sampleCorr(Z: Float64Array, F: Float64Array, T: number, rho: number): Float64Array {
+    const X = new Float64Array(T * N);
+    const sm = Math.sqrt(rho), se = Math.sqrt(1 - rho);
+    for (let t = 0; t < T; t++) for (let i = 0; i < N; i++) X[t * N + i] = sm * F[t] + se * Z[t * N + i];
+    for (let i = 0; i < N; i++) {
+      let m = 0, v = 0;
+      for (let t = 0; t < T; t++) m += X[t * N + i];
+      m /= T;
+      for (let t = 0; t < T; t++) { X[t * N + i] -= m; v += X[t * N + i] ** 2; }
+      const sd = Math.sqrt(v);
+      for (let t = 0; t < T; t++) X[t * N + i] /= sd;
+    }
+    const Cm = new Float64Array(N * N);
+    for (let i = 0; i < N; i++) for (let j = i; j < N; j++) {
+      let s = 0;
+      for (let t = 0; t < T; t++) s += X[t * N + i] * X[t * N + j];
+      Cm[i * N + j] = Cm[j * N + i] = s;
+    }
+    return Cm;
+  }
+
+  mount("data-spectrum", (root, env) => {
+    const canvas = root.querySelector("canvas")!;
+    const Z = normals(31, TMAX * N);
+    const F = normals(37, TMAX);
+    let key = "", cache: number[] = [];
+    const mode = segmented(root, () => draw());
+
+    function draw() {
+      const C = env.C;
+      const real = mode() === "real";
+      let ev: number[], q: number;
+      if (real) {
+        ev = spec.eigenvalues as number[];
+        q = spec.N / spec.T;
+      } else {
+        q = +$in(root, "q").value;
+        const rho = +$in(root, "rho").value;
+        const T = Math.round(N / q);
+        const k = `${T}|${rho}`;
+        if (k !== key) { cache = eigenvalues(sampleCorr(Z, F, T, rho), N); key = k; }
+        ev = cache;
+        $out(root, "q").textContent = `${q.toFixed(2)}  (T = ${T})`;
+        $out(root, "rho").textContent = rho.toFixed(2);
+      }
+      const lp0 = (1 + Math.sqrt(q)) ** 2;
+      // If the top eigenvalue is a clear outlier (the market), the bulk only carries the rest of the variance:
+      // rescale the noise band by s2 = 1 − λ1/N before comparing.
+      const s2 = ev[0] > lp0 ? 1 - ev[0] / N : 1;
+      const lp = s2 * lp0, lm = s2 * (1 - Math.sqrt(q)) ** 2;
+      const xmax = Math.max(4, lp0 * 1.5);
+      const { ctx, w, h } = fit(canvas);
+      ctx.clearRect(0, 0, w, h);
+      const box = { x0: 52, x1: w - 16, y0: 26, y1: h - 34 };
+      const BINS = 40, bw = xmax / BINS;
+      const counts = new Array(BINS).fill(0);
+      const outliers = ev.filter((v) => v >= xmax);
+      ev.forEach((v) => { if (v < xmax) counts[Math.min(BINS - 1, Math.floor(v / bw))]++; });
+      const mpw = (x: number, a: number, b: number, v: number) => (x <= a || x >= b ? 0 : Math.sqrt((b - x) * (x - a)) / (2 * Math.PI * q * v * x));
+      const mp = (x: number) => mpw(x, lm, lp, s2);
+      let dmax = 0;
+      for (let i = 1; i < 200; i++) dmax = Math.max(dmax, mp(lm + ((lp - lm) * i) / 200));
+      const ymax = Math.max(...counts.map((c) => c / (N * bw)), dmax) * 1.12;
+      const A = axes(ctx, C, box, { lo: 0, hi: xmax, label: "eigenvalue" }, { lo: 0, hi: ymax, ticks: [], label: "density" });
+      counts.forEach((c, k) => {
+        const mid = (k + 0.5) * bw;
+        ctx.fillStyle = mid > lp ? C.warm : C.accent;
+        ctx.globalAlpha = 0.6;
+        const y = A.Y(c / (N * bw));
+        ctx.fillRect(A.X(k * bw) + 1, y, A.X(bw) - A.X(0) - 2, box.y1 - y);
+      });
+      ctx.globalAlpha = 1;
+      const pts: [number, number][] = [];
+      for (let i = 0; i <= 300; i++) {
+        const x = lm + ((lp - lm) * i) / 300;
+        pts.push([A.X(x), A.Y(mp(x))]);
+      }
+      line(ctx, pts, C.fg, 1.6);
+      line(ctx, [[A.X(lp), box.y0], [A.X(lp), box.y1]], C.muted, 1, [3, 4]);
+      label(ctx, s2 < 1 ? "λ₊ after removing the market" : "λ₊ noise edge", A.X(lp) + 5, box.y0 + 6, C.muted);
+      if (s2 < 1) {
+        const raw: [number, number][] = [];
+        const lm0 = (1 - Math.sqrt(q)) ** 2;
+        for (let i = 0; i <= 300; i++) {
+          const x = lm0 + ((lp0 - lm0) * i) / 300;
+          raw.push([A.X(x), A.Y(mpw(x, lm0, lp0, 1))]);
+        }
+        line(ctx, raw, C.muted, 1, [4, 4]);
+        label(ctx, "pure noise", A.X(lp0) + 5, box.y0 + 22, C.muted);
+      }
+      if (outliers.length) {
+        const x = box.x1 - 4;
+        ctx.fillStyle = C.warm;
+        ctx.beginPath();
+        ctx.moveTo(x, box.y1 - 30);
+        ctx.lineTo(x - 9, box.y1 - 36);
+        ctx.lineTo(x - 9, box.y1 - 24);
+        ctx.fill();
+        label(ctx, `${outliers.map((v) => v.toFixed(1)).join(", ")} →`, x - 14, box.y1 - 30, C.warm, "right");
+      }
+      const above = ev.filter((v) => v > lp).length;
+      $out(root, "edge").innerHTML = s2 < 1 ? `${lp.toFixed(2)} <small>pure noise ${lp0.toFixed(2)}</small>` : lp.toFixed(2);
+      $out(root, "above").textContent = String(above);
+      $out(root, "top").innerHTML = `${ev[0].toFixed(1)} <small>${Math.round((ev[0] / N) * 100)}% of variance</small>`;
+      $out(root, "low").innerHTML = `${ev[ev.length - 1].toFixed(2)} <small>λ₋ ${lm.toFixed(2)}</small>`;
+      root.querySelector("[data-foot]")!.textContent = real
+        ? `Daily log returns of the 100 largest Binance USD-M crypto perpetuals by quote volume, ${spec.T} days ending ${spec.end} (data.binance.vision). q = ${q.toFixed(2)}.`
+        : `${N} simulated assets, T = ${Math.round(N / q)} days. Market factor 0 is pure noise. Curve: Marchenko–Pastur density for q, rescaled for the variance left after the top eigenvalue when it is an outlier.`;
+    }
+    return { draw };
+  });
+</script>
