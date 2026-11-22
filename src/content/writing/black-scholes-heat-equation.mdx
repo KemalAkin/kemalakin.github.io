@@ -1,0 +1,150 @@
+---
+title: Black–Scholes is the heat equation
+description: "Two changes of variable turn the option-pricing equation into the diffusion equation of a hot rod. Then one price comes out three ways: a closed form, Monte Carlo and a finite-difference grid, each with its own way to fail."
+date: 2026-11-07
+topic: Quantitative finance
+tags: [Options, Numerical methods, PDE]
+interactive: true
+slug: black-scholes-heat-equation
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import HeatPricer from "../../components/HeatPricer.astro";
+
+{/*
+  Example contract: S = 100, K = 110, r = 3%, σ = 60%, T = 0.5. Closed form 13.63; Monte Carlo
+  (1,000,000 paths) 13.61 ± 0.03; explicit FD on 400 grid points, λ = 0.45: 13.63; λ = 0.52 blows up.
+  Change of variables re-derived by hand. In the figure: 161 grid points over log-price 20–500, 20,000 MC draws.
+*/}
+
+A physics student meets the heat equation in their second year: heat spreads along a rod, sharp temperature
+differences smooth out, and the solution is a Gaussian that widens with time. Option pricing looks like a
+different world, with its own jargon. It is the same equation.
+
+## The pricing equation
+
+Under the Black–Scholes assumptions [1, 2] (the price follows geometric Brownian motion, trading is continuous, a
+risk-free rate $r$ exists), the value $V(S, t)$ of a European option satisfies
+
+$$
+\frac{\partial V}{\partial t} + \tfrac12 \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2}
++ r S \frac{\partial V}{\partial S} - r V = 0,
+$$
+
+with the payoff as a condition at expiry $T$: $V(S, T) = \max(S - K, 0)$ for a call. Note that the drift $\mu$
+from the GBM note does not appear. Hedging removes it, which is the central surprise of the theory.
+
+## Two changes of variable
+
+Run time backwards from expiry, $\tau = T - t$, discount the value, and shift the log-price by the drift a hedged
+position earns:
+
+$$
+V(S, t) = e^{-r\tau}\, u(x, \tau), \qquad x = \ln S + \left(r - \tfrac12 \sigma^2\right)\tau .
+$$
+
+Substituting and collecting terms, every first-derivative term cancels and what is left is
+
+$$
+\frac{\partial u}{\partial \tau} = \tfrac12 \sigma^2 \frac{\partial^2 u}{\partial x^2},
+\qquad u(x, 0) = \max(e^x - K, 0).
+$$
+
+That is the heat equation with diffusivity $\sigma^2/2$. The payoff is the initial temperature profile along the
+rod, and the kink at the strike is a sharp edge that time smooths out.
+
+<Callout label="Bachelier got there first">
+Louis Bachelier's 1900 thesis [3] modeled prices with what we now call Brownian motion, five years before
+Einstein's paper on Brownian motion [4]. Mathematicians drew on it, but economists overlooked it for about half a
+century.
+</Callout>
+
+## Three ways to one number
+
+The heat equation's solution is the initial profile averaged against a Gaussian kernel of variance $\sigma^2\tau$.
+In financial language, the option price is the discounted average payoff over lognormal outcomes. Pick one
+contract (spot 100, strike 110, rate 3%, volatility 60%, six months) and compute it three ways.
+
+**1. Closed form.** For a call the Gaussian integral can be done exactly:
+
+$$
+C = S\,\Phi(d_1) - K e^{-rT}\Phi(d_2), \qquad
+d_{1,2} = \frac{\ln(S/K) + (r \pm \tfrac12\sigma^2)T}{\sigma\sqrt{T}} .
+$$
+
+It gives $C = 13.63$.
+
+**2. Monte Carlo.** Draw the terminal price directly, average the discounted payoff. One million paths give
+$13.61 \pm 0.03$. The error shrinks like $1/\sqrt{n}$ no matter how many dimensions the problem has, which is why
+Monte Carlo wins for baskets and path-dependent payoffs and loses for a single vanilla option.
+
+**3. Finite differences.** Put the heat equation on a grid in $x$ and step forward in $\tau$ with the simplest
+explicit scheme:
+
+$$
+u_i^{n+1} = u_i^n + \lambda \left(u_{i+1}^n - 2u_i^n + u_{i-1}^n\right),
+\qquad \lambda = \frac{\sigma^2 \Delta\tau}{2\,\Delta x^2}.
+$$
+
+With 400 grid points and $\lambda = 0.45$ it returns 13.63. Push $\lambda$ to 0.52 and the same code returns a
+number around $-3 \times 10^{40}$.
+
+<Callout label="The stability limit">
+The explicit scheme is stable only for $\lambda \le \tfrac12$, the same limit a physics student meets when
+simulating a cooling rod. Halving $\Delta x$ forces $\Delta\tau$ to quarter. Implicit schemes (Crank–Nicolson [5])
+remove the limit at the cost of solving a tridiagonal system each step.
+</Callout>
+
+<HeatPricer />
+
+```python title="heat_pricer.py"
+import numpy as np
+
+def call_by_heat_equation(S, K, r, sigma, T, nx=400, lam=0.45):
+    width = 6 * sigma * np.sqrt(T)
+    x = np.linspace(np.log(S) - width, np.log(S) + width, nx)
+    dx = x[1] - x[0]
+    steps = int(np.ceil(T / (2 * lam * dx**2 / sigma**2)))
+    dtau = T / steps
+    lam = 0.5 * sigma**2 * dtau / dx**2           # actual λ after rounding the step count
+    u = np.maximum(np.exp(x) - K, 0.0)            # payoff = initial temperature
+    for _ in range(steps):
+        u[1:-1] += lam * (u[2:] - 2 * u[1:-1] + u[:-2])
+        u[0], u[-1] = 0.0, np.exp(x[-1]) - K       # far edges: worthless / deep in the money
+    x0 = np.log(S) + (r - 0.5 * sigma**2) * T      # undo the change of variables
+    return np.exp(-r * T) * np.interp(x0, x, u)
+
+print(call_by_heat_equation(100, 110, 0.03, 0.60, 0.5))
+```
+
+## Which method when
+
+| Method | Strength | Breaks when |
+| --- | --- | --- |
+| Closed form | exact, instant | the payoff or the dynamics get realistic |
+| Monte Carlo | any payoff, many assets | you need early exercise or smooth sensitivities |
+| PDE grid | early exercise, barriers, fast in one or two dimensions | dimension grows; explicit steps break the stability limit |
+
+## Takeaway
+
+The equation that prices an option is the equation that cools a rod. Recognizing it buys you a century of
+numerical methods, and the same lessons: Gaussians smooth corners, Monte Carlo converges slowly but anywhere,
+and an explicit grid is fast until you take one step too many.
+
+## References
+
+1. F. Black and M. Scholes, "The pricing of options and corporate liabilities," *Journal of Political Economy*
+   81(3), 637–654 (1973). [doi:10.1086/260062](https://doi.org/10.1086/260062)
+2. R. C. Merton, "Theory of rational option pricing," *Bell Journal of Economics and Management Science* 4(1),
+   141–183 (1973). [doi:10.2307/3003143](https://doi.org/10.2307/3003143)
+3. L. Bachelier, "Théorie de la spéculation," *Annales scientifiques de l'École Normale Supérieure* (3) 17, 21–86
+   (1900). [doi:10.24033/asens.476](https://doi.org/10.24033/asens.476)
+4. A. Einstein, "Über die von der molekularkinetischen Theorie der Wärme geforderte Bewegung von in ruhenden
+   Flüssigkeiten suspendierten Teilchen," *Annalen der Physik* 322(8), 549–560 (1905).
+   [doi:10.1002/andp.19053220806](https://doi.org/10.1002/andp.19053220806)
+5. J. Crank and P. Nicolson, "A practical method for numerical evaluation of solutions of partial differential
+   equations of the heat-conduction type," *Proceedings of the Cambridge Philosophical Society* 43(1), 50–67 (1947).
+   [doi:10.1017/S0305004100023197](https://doi.org/10.1017/S0305004100023197)
+
+{/* Verified on 2026-11-07 (Crossref). Bachelier history: M. Davis, "Louis Bachelier's Theory of Speculation"
+    (Imperial College): economists ignored it until Samuelson in the 1960s; Kolmogorov used it in 1931. */}

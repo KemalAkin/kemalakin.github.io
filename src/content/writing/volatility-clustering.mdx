@@ -1,0 +1,184 @@
+---
+title: Calm and storm, why volatility clusters
+description: "Returns are nearly unpredictable, but their size is not. GARCH(1,1) explains volatility clustering and fat tails with two parameters, and turns a single number for risk into a forecast."
+date: 2026-11-07
+topic: Quantitative finance
+tags: [Time series, Volatility]
+interactive: true
+slug: volatility-clustering
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import GarchExplorer from "../../components/GarchExplorer.astro";
+
+{/*
+  Numbers from a NumPy/SciPy check: closed-form GARCH(1,1) moments, a 200,000-day simulation for the
+  autocorrelations and kurtosis, and a Nelder–Mead maximum-likelihood fit on the first 2,000 days.
+  The "BTC daily" tab uses Binance USD-M BTCUSDT daily klines from data.binance.vision.
+*/}
+
+The GBM and Kelly notes assume one fixed volatility $\sigma$. Look at any price chart and the assumption fails at
+a glance: quiet weeks follow quiet weeks, and a violent day is usually followed by more violent days. Mandelbrot
+noticed it in cotton prices in 1963: large changes tend to be followed by large changes, of either sign [1]. It is
+called volatility clustering, and it is one of a handful of "stylized facts" that hold across almost every liquid
+market [2]:
+
+- daily returns are close to uncorrelated: yesterday's sign says little about today's;
+- the *size* of returns ($|r|$ or $r^2$) is strongly and persistently correlated;
+- the distribution of returns has fatter tails than a normal one.
+
+The first fact is why prices look like random walks. The second is why risk is forecastable even when direction
+is not.
+
+## GARCH(1,1)
+
+Engle's ARCH model [3] and Bollerslev's generalization, GARCH [4], make tomorrow's variance a function of today's
+news. Write the daily return as $r_t = \sigma_t z_t$ with $z_t$ an independent standard normal draw, and let
+
+$$
+\sigma_t^2 = \omega + \alpha\, r_{t-1}^2 + \beta\, \sigma_{t-1}^2 .
+$$
+
+A large move yesterday ($\alpha$ term) raises today's variance, and the variance itself is sticky ($\beta$ term).
+With $\alpha + \beta < 1$ the process settles around a long-run variance, and every shock fades geometrically:
+
+$$
+\bar\sigma^2 = \frac{\omega}{1 - \alpha - \beta}, \qquad
+\text{half-life of a shock} = \frac{\ln \tfrac12}{\ln(\alpha + \beta)} \text{ days}.
+$$
+
+The sum $\alpha + \beta$ is the **persistence**. For daily data on most assets it lands between 0.9 and 0.99.
+
+## Fat tails for free
+
+Every $z_t$ is normal, yet the returns are not. Mixing normals with different variances fattens the tails, and
+GARCH mixes them in a specific way. For normal shocks the kurtosis is
+
+$$
+\kappa = \frac{3\left(1 - (\alpha+\beta)^2\right)}{1 - (\alpha+\beta)^2 - 2\alpha^2} > 3,
+$$
+
+and the autocorrelation of squared returns starts at
+
+$$
+\rho_1 = \frac{\alpha\,(1 - \alpha\beta - \beta^2)}{1 - 2\alpha\beta - \beta^2}
+$$
+
+and then decays as $\rho_k = \rho_1 (\alpha+\beta)^{k-1}$.
+
+Take $\alpha = 0.10$, $\beta = 0.85$ and a long-run volatility of 60% a year (a 365-day year, since crypto
+trades every day). Then:
+
+| Quantity | Theory | Simulation (200,000 days) |
+| --- | --- | --- |
+| Shock half-life | 13.5 days | |
+| Kurtosis | 3.77 | 3.75 |
+| Autocorrelation of $r$, lag 1 | 0 | −0.0005 |
+| Autocorrelation of $r^2$, lags 1 / 5 / 20 | 0.179 / 0.146 / 0.068 | 0.180 / 0.144 / 0.067 |
+
+Two parameters reproduce all three stylized facts. They do not reproduce the *amount* of tail seen in real
+data, which is why practical fits usually replace the normal $z_t$ with a Student-$t$.
+
+<GarchExplorer />
+
+## The same facts in Bitcoin
+
+The "BTC daily" tab uses Binance's BTCUSDT perpetual, daily closes from September 2021 to October 2026: 1,878
+returns with an annualized volatility of 52%. All three facts are there:
+
+- autocorrelation of returns at lags 1, 5 and 20 is −0.02, 0.02 and −0.04, inside the ±0.05 band that pure noise
+  would produce with this many points;
+- autocorrelation of squared returns is 0.18 at lag 1, 0.07 at lag 5 and zero by lag 20;
+- kurtosis is 7.3, well above the normal 3.
+
+The maximum-likelihood fit with normal shocks gives $\hat\alpha = 0.11$, $\hat\beta = 0.82$: persistence 0.93, a
+shock half-life of about 10 days, and a long-run volatility of 54%. It reproduces the lag-1 correlation of squared
+returns almost exactly (model 0.18) but expects more memory further out (0.14 at lag 5 against 0.07 in the data),
+and its kurtosis is 3.7 against 7.3. After dividing each return by its fitted $\sigma_t$, the leftovers still have
+kurtosis 6.2: the clustering is explained, the tails are not.
+
+Swapping the normal shock for a Student-$t$ fixes the tails with a striking estimate: about 3 degrees of freedom,
+barely enough for the variance to exist. The persistence then rises to 0.997, so in that fit shocks fade over
+months rather than days and the long-run level is poorly pinned down.
+
+## Fitting it
+
+The model gives the likelihood directly: given the parameters, run the variance recursion over the data and
+add up the normal log-densities. Maximizing that is a three-parameter optimization.
+
+```python title="garch.py"
+import numpy as np
+from scipy.optimize import minimize
+
+def simulate_garch(omega, alpha, beta, n, seed=11):
+    rng = np.random.default_rng(seed)
+    r, var = np.empty(n), np.empty(n)
+    var[0] = omega / (1 - alpha - beta)
+    for t in range(n):
+        if t > 0:
+            var[t] = omega + alpha * r[t - 1] ** 2 + beta * var[t - 1]
+        r[t] = np.sqrt(var[t]) * rng.standard_normal()
+    return r
+
+def neg_log_likelihood(params, r):
+    omega, alpha, beta = params
+    if omega <= 0 or alpha < 0 or beta < 0 or alpha + beta >= 1:
+        return np.inf
+    var = np.empty_like(r)
+    var[0] = r.var()
+    for t in range(1, len(r)):
+        var[t] = omega + alpha * r[t - 1] ** 2 + beta * var[t - 1]
+    return 0.5 * np.sum(np.log(var) + r**2 / var)
+
+long_run_daily_var = 0.60**2 / 365
+omega = long_run_daily_var * (1 - 0.10 - 0.85)
+r = simulate_garch(omega, 0.10, 0.85, n=2_000)
+fit = minimize(neg_log_likelihood, x0=[r.var() * 0.1, 0.05, 0.90], args=(r,), method="Nelder-Mead")
+print(fit.x)
+```
+
+On 2,000 simulated days the fit returns $\hat\alpha = 0.12$, $\hat\beta = 0.83$ and a long-run volatility of
+61%, close to the truth but not exact; individual parameters are noisier than their sum. For real work, the
+`arch` package [5] does this with standard errors and other shock distributions.
+
+## Volatility as a forecast
+
+The payoff is a forecast of variance at every horizon. Iterating the recursion,
+
+$$
+\mathbb{E}_t\!\left[\sigma_{t+h}^2\right] = \bar\sigma^2 + (\alpha+\beta)^{h-1}\left(\sigma_{t+1}^2 - \bar\sigma^2\right),
+$$
+
+so after a shock, near-term volatility is high and the forecast slides back to the long-run level with the
+half-life above. That shape, a term structure of volatility, is what risk limits, margin and option prices are
+really about.
+
+It also closes a loop with the Kelly note. The growth-optimal leverage is $\mu/\sigma^2$; if $\sigma$ moves, so
+should position size. Scaling exposure by forecast volatility, "volatility targeting", is Kelly with a
+time-varying $\sigma$ and an honest admission that $\mu$ is unknown.
+
+## Takeaway
+
+Direction is close to noise; magnitude is not. A model with two numbers, how hard news hits and how long it
+lingers, explains why calm and storm come in runs, why tails are fat even with normal shocks, and gives a risk
+forecast you can size positions with.
+
+## Data
+
+Binance Data Collection, USDⓈ-M futures daily klines (BTCUSDT), [data.binance.vision](https://data.binance.vision/).
+
+## References
+
+1. B. Mandelbrot, "The variation of certain speculative prices," *Journal of Business* 36(4), 394–419 (1963).
+   [doi:10.1086/294632](https://doi.org/10.1086/294632)
+2. R. Cont, "Empirical properties of asset returns: stylized facts and statistical issues," *Quantitative Finance*
+   1(2), 223–236 (2001). [doi:10.1080/713665670](https://doi.org/10.1080/713665670)
+3. R. F. Engle, "Autoregressive conditional heteroscedasticity with estimates of the variance of United Kingdom
+   inflation," *Econometrica* 50(4), 987–1007 (1982). [doi:10.2307/1912773](https://doi.org/10.2307/1912773)
+4. T. Bollerslev, "Generalized autoregressive conditional heteroskedasticity," *Journal of Econometrics* 31(3),
+   307–327 (1986). [doi:10.1016/0304-4076(86)90063-1](https://doi.org/10.1016/0304-4076(86)90063-1)
+5. K. Sheppard et al., *arch*: ARCH models in Python. [github.com/bashtage/arch](https://github.com/bashtage/arch),
+   [doi:10.5281/zenodo.593254](https://doi.org/10.5281/zenodo.593254)
+
+{/* Verified on 2026-11-07 (Crossref, Zenodo, Mandelbrot p. 418 for the clustering quote). BTC numbers: Python
+    check (Nelder–Mead MLE, normal and Student-t shocks). */}

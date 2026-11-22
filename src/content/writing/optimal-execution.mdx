@@ -1,0 +1,135 @@
+---
+title: Selling a large position is a mechanics problem
+description: "Sell too fast and you pay the market to absorb you; sell too slowly and the price wanders away. Almgren and Chriss turned the trade-off into a variational problem whose answer is a hyperbolic sine."
+date: 2026-11-07
+topic: Quantitative finance
+tags: [Market microstructure, Optimal control]
+slug: optimal-execution
+interactive: true
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import ExecutionExplorer from "../../components/ExecutionExplorer.astro";
+
+{/*
+  Cost / risk ratios from the closed forms below, checked numerically in Python. The model is the continuous-time
+  version of Almgren & Chriss with linear temporary impact; permanent impact is dropped because, being linear,
+  it adds the same cost to every schedule.
+*/}
+
+You hold a position you need to get rid of: a fund rebalancing, a desk unwinding inventory, a liquidation. Sell
+it all at once and you eat through the order book, paying a worse price on every unit. Sell it slowly and the
+price has time to move against you. Somewhere between "now" and "eventually" is a best schedule. Almgren and Chriss
+[1] showed that finding it is the same kind of problem as finding the path of a particle.
+
+## Two costs pulling in opposite directions
+
+Let $x(t)$ be the inventory still to sell, from $x(0) = X$ to $x(T) = 0$, so the selling rate is $-\dot x$.
+
+**Impact.** Trading fast moves the price you get. The simplest model charges a concession proportional to the
+rate, $\eta\,|\dot x|$ per unit, so the expected cost of the schedule is
+
+$$
+\mathbb{E}[\text{cost}] = \eta \int_0^T \dot x^2 \, dt .
+$$
+
+**Risk.** Inventory you still hold is exposed to the price, which moves with volatility $\sigma$. The variance
+of the proceeds is
+
+$$
+\operatorname{Var}[\text{cost}] = \sigma^2 \int_0^T x^2 \, dt .
+$$
+
+A trader who dislikes risk with aversion $\lambda$ minimizes $\mathbb{E} + \lambda \operatorname{Var}$:
+
+$$
+\min_{x(\cdot)} \int_0^T \left( \eta\,\dot x^2 + \lambda\sigma^2 x^2 \right) dt .
+$$
+
+## The Euler–Lagrange equation
+
+That integral is an action. The Euler–Lagrange equation for it is
+
+$$
+\frac{d}{dt}\left(2\eta\,\dot x\right) = 2\lambda\sigma^2 x
+\quad\Longrightarrow\quad
+\ddot x = \kappa^2 x, \qquad \kappa^2 = \frac{\lambda\sigma^2}{\eta}.
+$$
+
+It is the equation of motion of a harmonic oscillator in imaginary time, or the temperature profile along a
+cooling fin. With the boundary conditions $x(0) = X$, $x(T) = 0$ the solution is
+
+$$
+x(t) = X\,\frac{\sinh\big(\kappa (T - t)\big)}{\sinh(\kappa T)} .
+$$
+
+A single number controls the shape: $\kappa T$, the horizon measured in units of the trader's natural time scale
+$1/\kappa$. As $\kappa T \to 0$ (no risk aversion, or a short horizon) the hyperbolic sine becomes a straight
+line and the schedule is a constant-rate sale, TWAP. As $\kappa T$ grows, the schedule front-loads: sell hard
+early, then taper off exponentially with time constant $1/\kappa$.
+
+<ExecutionExplorer />
+
+## What the urgency buys
+
+Integrating the solution gives the cost and the risk relative to TWAP in closed form:
+
+$$
+\frac{\mathbb{E}}{\mathbb{E}_{\text{TWAP}}} = \frac{(\kappa T)^2}{\sinh^2 \kappa T}\left(\frac12 + \frac{\sinh 2\kappa T}{4\kappa T}\right),
+$$
+
+$$
+\frac{\operatorname{Var}}{\operatorname{Var}_{\text{TWAP}}} = \frac{3}{\sinh^2 \kappa T}\left(\frac{\sinh 2\kappa T}{4\kappa T} - \frac12\right).
+$$
+
+| $\kappa T$ | Expected cost (× TWAP) | Risk, std. dev. (× TWAP) | Inventory left at $T/2$ |
+| --- | --- | --- | --- |
+| 0 (TWAP) | 1.00 | 1.00 | 50% |
+| 1 | 1.02 | 0.94 | 44% |
+| 2 | 1.19 | 0.81 | 32% |
+| 3 | 1.55 | 0.70 | 21% |
+| 5 | 2.50 | 0.55 | 8% |
+
+The first row of that table is the useful one. Going from TWAP to $\kappa T = 1$ cuts risk by 6% for 2% more
+expected cost. Near TWAP the frontier is flat, for the same reason the Kelly parabola is flat at its top: at an
+optimum, a small step away costs nothing to first order. The price of urgency rises steeply after that.
+
+## Code
+
+```python title="execution.py"
+import numpy as np
+
+def schedule(k_T, n=11):
+    """Fraction of the position left at n evenly spaced times, for urgency k_T = kappa * T."""
+    t = np.linspace(0, 1, n)
+    if k_T < 1e-9:
+        return 1 - t
+    return np.sinh(k_T * (1 - t)) / np.sinh(k_T)
+
+def cost_and_risk(k_T):
+    """Expected impact cost and standard deviation, both relative to TWAP."""
+    s2, q = np.sinh(k_T) ** 2, np.sinh(2 * k_T) / (4 * k_T)
+    return k_T**2 / s2 * (0.5 + q), np.sqrt(3 / s2 * (q - 0.5))
+
+for k_T in (1, 2, 3, 5):
+    cost, risk = cost_and_risk(k_T)
+    print(f"kT={k_T}: cost x{cost:.2f}, risk x{risk:.2f}, left at T/2 {schedule(k_T, 3)[1]:.0%}")
+```
+
+## What the model leaves out
+
+Impact here is linear and instantaneous; in real markets it grows roughly like the square root of the traded size
+[2] and decays over time after you trade. Volatility is constant, and the price has no drift, so the schedule never tries to time the market. Each
+of these has its own literature, but the core result survives: the optimal schedule balances a cost that punishes
+speed against a risk that punishes delay, and the balance point is a hyperbolic sine.
+
+## References
+
+1. R. Almgren and N. Chriss, "Optimal execution of portfolio transactions," *Journal of Risk* 3(2), 5–39 (Winter
+   2000). [doi:10.21314/JOR.2001.041](https://doi.org/10.21314/JOR.2001.041)
+2. B. Tóth, Y. Lempérière, C. Deremble, J. de Lataillade, J. Kockelkoren and J.-P. Bouchaud, "Anomalous price
+   impact and the critical nature of liquidity in financial markets," *Physical Review X* 1, 021006 (2011).
+   [doi:10.1103/PhysRevX.1.021006](https://doi.org/10.1103/PhysRevX.1.021006)
+
+{/* Verified against Crossref / publisher pages on 2026-11-07. Journal of Risk lists 3(2) as Winter 2000; the DOI
+    and Crossref date it 2001. Tóth et al. both document (with earlier studies) and explain the square-root law. */}
