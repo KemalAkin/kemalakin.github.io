@@ -40,7 +40,8 @@ const { title, description, label, meta, back, next } = Astro.props;
 
 <style>
   .post { padding-block: 48px 0; }
-  .post-inner { max-width: 760px; margin-inline: auto; }
+  /* One column for text and figures: at 840px and 18px type a line holds about 100 characters. */
+  .post-inner { max-width: 840px; margin-inline: auto; }
   .back { font-family: var(--f-mono); font-size: 0.8125rem; color: var(--muted); text-decoration: none; }
   .back:hover { color: var(--accent); }
   header { display: grid; gap: 14px; padding: 28px 0 32px; border-bottom: 1px solid var(--line); }
