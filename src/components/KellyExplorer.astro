@@ -1,0 +1,153 @@
+---
+// Interactive Kelly sizing: the median-growth parabola g(L) for a GBM asset, and simulated wealth paths
+// at the chosen leverage (daily rebalanced, one year, log axis).
+interface Props {
+  mu?: number;
+  sigma?: number;
+  lev?: number;
+}
+const { mu = 0.06, sigma = 0.38, lev = 1 } = Astro.props;
+---
+
+<figure class="fig" data-kelly aria-label="Interactive Kelly leverage">
+  <div class="fig-head">
+    <strong>Try it: choose the leverage</strong>
+    <button class="fig-btn" type="button" data-rerun>Re-run</button>
+  </div>
+  <div class="controls">
+    <div class="ctrl">
+      <label><span>Leverage L</span><span data-out="lev"></span></label>
+      <input type="range" data-in="lev" min="0" max="3" step="0.01" value={lev} aria-label="Leverage" />
+    </div>
+    <div class="ctrl">
+      <label><span>Drift μ</span><span data-out="mu"></span></label>
+      <input type="range" data-in="mu" min="0" max="0.4" step="0.01" value={mu} aria-label="Drift mu" />
+    </div>
+    <div class="ctrl">
+      <label><span>Volatility σ</span><span data-out="sigma"></span></label>
+      <input type="range" data-in="sigma" min="0.05" max="0.9" step="0.01" value={sigma} aria-label="Volatility sigma" />
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label">Kelly L*</span><span class="v" data-out="lstar">–</span></div>
+    <div><span class="label">Median growth</span><span class="v" data-out="g">–</span></div>
+    <div><span class="label">Paths below start</span><span class="v hot" data-out="below">–</span></div>
+    <div><span class="label">Ever halves</span><span class="v" data-out="halve">–</span></div>
+  </div>
+  <div class="plot"><canvas role="img" aria-label="Growth rate against leverage, and simulated wealth paths"></canvas></div>
+  <figcaption class="fig-foot">Cash rate 0. Left: median growth g(L) = Lμ − L²σ²/2. Right: 200 one-year paths rebalanced daily. "Ever halves" is the model's chance of ever falling to half, over any horizon.</figcaption>
+</figure>
+
+<script>
+  import { $in, $out, axes, fit, label, line, mount, normals, pct } from "../scripts/figure";
+
+  const N = 200, STEPS = 252, DT = 1 / 252;
+
+  mount("data-kelly", (root, env) => {
+    const canvas = root.querySelector("canvas")!;
+    let seed = 11;
+    let Z = normals(seed, N * STEPS);
+
+    function draw() {
+      const L = +$in(root, "lev").value, mu = +$in(root, "mu").value, s = +$in(root, "sigma").value;
+      const C = env.C;
+      const g = (l: number) => l * mu - 0.5 * l * l * s * s;
+      const Ls = mu / (s * s);
+      const { ctx, w, h } = fit(canvas);
+      ctx.clearRect(0, 0, w, h);
+      const narrow = w < 560;
+      const split = narrow ? h * 0.42 : w * 0.38;
+
+      // left (or top): the parabola
+      const gMax = Math.max(0.02, g(Math.min(Ls, 3)));
+      // keep the peak readable: the far end of the parabola may run off the bottom of the box
+      const gMin = Math.min(-0.03, Math.max(g(3), -4 * gMax));
+      const b1 = narrow
+        ? { x0: 52, x1: w - 12, y0: 22, y1: split - 26 }
+        : { x0: 52, x1: split - 16, y0: 22, y1: h - 30 };
+      const A = axes(ctx, C, b1, { lo: 0, hi: 3, label: "leverage L" }, { lo: gMin, hi: gMax * 1.15, fmt: (v) => pct(v), label: "median growth / yr" });
+      line(ctx, [[A.X(0), A.Y(0)], [A.X(3), A.Y(0)]], C.muted, 1, [3, 4]);
+      const pts: [number, number][] = [];
+      for (let i = 0; i <= 120; i++) {
+        const l = (i / 120) * 3;
+        pts.push([A.X(l), A.Y(g(l))]);
+      }
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(b1.x0, b1.y0 - 4, b1.x1 - b1.x0, b1.y1 - b1.y0 + 8);
+      ctx.clip();
+      line(ctx, pts, C.fg, 1.6);
+      ctx.restore();
+      if (Ls <= 3) {
+        line(ctx, [[A.X(Ls), A.Y(gMin)], [A.X(Ls), A.Y(g(Ls))]], C.accent, 1, [4, 4]);
+        label(ctx, "L*", A.X(Ls) + 4, A.Y(gMin) - 8, C.accent);
+      }
+      if (2 * Ls <= 3) label(ctx, "2L*", A.X(2 * Ls) + 4, A.Y(0) - 9, C.muted);
+      ctx.fillStyle = g(L) >= 0 ? C.accent : C.warm;
+      ctx.beginPath();
+      ctx.arc(A.X(L), A.Y(Math.max(gMin, g(L))), 5, 0, Math.PI * 2); // pinned to the bottom edge when off-scale
+      ctx.fill();
+
+      // right (or bottom): wealth paths on a log axis
+      const drift = (mu - (s * s) / 2) * DT, vol = s * Math.sqrt(DT);
+      const finals = new Float64Array(N);
+      const paths: Float64Array[] = [];
+      for (let i = 0; i < N; i++) {
+        const p = new Float64Array(STEPS + 1);
+        let lw = 0;
+        for (let k = 0; k < STEPS; k++) {
+          const ret = Math.exp(drift + vol * Z[i * STEPS + k]) - 1;
+          lw += Math.log(Math.max(1e-9, 1 + L * ret));
+          p[k + 1] = lw;
+        }
+        paths.push(p);
+        finals[i] = lw;
+      }
+      const sorted = Array.from(finals).sort((a, b) => a - b);
+      const lo = Math.min(-0.3, sorted[Math.floor(N * 0.01)]), hi = Math.max(0.3, sorted[Math.floor(N * 0.99)]);
+      const b2 = narrow
+        ? { x0: 52, x1: w - 12, y0: split + 16, y1: h - 30 }
+        : { x0: split + 46, x1: w - 12, y0: 22, y1: h - 30 };
+      const ticks = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4].map(Math.log).filter((v) => v >= lo && v <= hi);
+      const B = axes(ctx, C, b2,
+        { lo: 0, hi: STEPS, ticks: [0, 63, 126, 189, 252], fmt: (v) => ["0", "3 mo", "6 mo", "9 mo", "1 yr"][Math.round(v / 63)] },
+        { lo, hi, ticks, fmt: (v) => "×" + +Math.exp(v).toFixed(2), label: "wealth" });
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(b2.x0, b2.y0, b2.x1 - b2.x0, b2.y1 - b2.y0);
+      ctx.clip();
+      ctx.globalAlpha = 0.13;
+      let below = 0;
+      for (let i = 0; i < N; i++) {
+        if (finals[i] < 0) below++;
+        const pts2: [number, number][] = [];
+        for (let k = 0; k <= STEPS; k += 3) pts2.push([B.X(k), B.Y(paths[i][k])]);
+        line(ctx, pts2, finals[i] >= 0 ? C.accent : C.warm, 1);
+      }
+      ctx.globalAlpha = 1;
+      line(ctx, [[B.X(0), B.Y(0)], [B.X(STEPS), B.Y(0)]], C.muted, 1, [3, 4]);
+      line(ctx, [[B.X(0), B.Y(0)], [B.X(STEPS), B.Y(g(L))]], C.fg, 1.6);
+      ctx.restore();
+      label(ctx, "median", b2.x1 - 4, B.Y(g(L)) - 9, C.fg, "right");
+
+      // readouts
+      const v = L * s;
+      const gl = g(L);
+      const halve = L === 0 ? 0 : gl <= 0 ? 1 : Math.pow(0.5, (2 * gl) / (v * v));
+      $out(root, "lev").textContent = L.toFixed(2) + "×";
+      $out(root, "mu").textContent = pct(mu) + " / yr";
+      $out(root, "sigma").textContent = pct(s) + " / yr";
+      $out(root, "lstar").textContent = Ls.toFixed(2) + "×";
+      $out(root, "g").textContent = (gl >= 0 ? "+" : "") + pct(gl, 1);
+      $out(root, "below").textContent = pct(below / N);
+      $out(root, "halve").textContent = pct(halve);
+    }
+
+    root.querySelector("[data-rerun]")!.addEventListener("click", () => {
+      seed = (seed * 48271) % 2147483647;
+      Z = normals(seed, N * STEPS);
+      draw();
+    });
+    return { draw };
+  });
+</script>

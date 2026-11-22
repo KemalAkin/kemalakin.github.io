@@ -1,0 +1,166 @@
+---
+// Interactive Heston model: the implied-volatility smile from the semi-closed-form price, and one simulated
+// path of price and volatility, as correlation ρ, vol-of-vol ξ and mean reversion κ change.
+---
+
+<figure class="fig" data-heston aria-label="Interactive Heston stochastic volatility">
+  <div class="fig-head">
+    <strong>Try it: where the smile comes from</strong>
+    <button class="fig-btn" type="button" data-rerun>New path</button>
+  </div>
+  <div class="controls">
+    <div class="ctrl">
+      <label><span>Correlation ρ</span><span data-out="rho"></span></label>
+      <input type="range" data-in="rho" min="-0.9" max="0.9" step="0.05" value="-0.7" aria-label="Correlation rho" />
+    </div>
+    <div class="ctrl">
+      <label><span>Vol of vol ξ</span><span data-out="xi"></span></label>
+      <input type="range" data-in="xi" min="0.1" max="1.5" step="0.05" value="1" aria-label="Vol of vol xi" />
+    </div>
+    <div class="ctrl">
+      <label><span>Mean reversion κ</span><span data-out="kappa"></span></label>
+      <input type="range" data-in="kappa" min="0.5" max="6" step="0.1" value="2" aria-label="Mean reversion kappa" />
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label">At-the-money vol</span><span class="v" data-out="atm">–</span></div>
+    <div><span class="label">Skew, 90 − 110</span><span class="v hot" data-out="skew">–</span></div>
+    <div><span class="label">Wings − ATM</span><span class="v" data-out="wing">–</span></div>
+    <div><span class="label">Feller 2κθ/ξ²</span><span class="v" data-out="feller">–</span></div>
+  </div>
+  <div class="plot short"><canvas role="img" aria-label="Implied volatility smile and a simulated path"></canvas></div>
+  <figcaption class="fig-foot">Spot 100, three-month options, rate 0; v₀ = θ = 0.36 (60% volatility). Left: Heston implied volatility by strike, against the flat 60% of Black–Scholes. Right: one year of simulated price and volatility (full-truncation Euler, daily steps).</figcaption>
+</figure>
+
+<script>
+  import { $in, $out, axes, fit, impliedVol, label, line, mount, normals } from "../scripts/figure";
+
+  type Cx = [number, number];
+  const add = (a: Cx, b: Cx): Cx => [a[0] + b[0], a[1] + b[1]];
+  const sub = (a: Cx, b: Cx): Cx => [a[0] - b[0], a[1] - b[1]];
+  const mul = (a: Cx, b: Cx): Cx => [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]];
+  const div = (a: Cx, b: Cx): Cx => {
+    const d = b[0] * b[0] + b[1] * b[1];
+    return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d];
+  };
+  const cexp = (a: Cx): Cx => [Math.exp(a[0]) * Math.cos(a[1]), Math.exp(a[0]) * Math.sin(a[1])];
+  const clog = (a: Cx): Cx => [Math.log(Math.hypot(a[0], a[1])), Math.atan2(a[1], a[0])];
+  const csqrt = (a: Cx): Cx => {
+    const m = Math.hypot(a[0], a[1]);
+    const re = Math.sqrt((m + a[0]) / 2);
+    const im = Math.sqrt(Math.max(0, (m - a[0]) / 2));
+    return [re, a[1] < 0 ? -im : im];
+  };
+  const sc = (k: number, a: Cx): Cx => [k * a[0], k * a[1]];
+
+  const S0 = 100, T = 0.25, V0 = 0.36, THETA = 0.36;
+
+  /** Characteristic function of ln S_T (rate 0), in the "little Heston trap" form that avoids the branch cut. */
+  function cf(u: Cx, kappa: number, xi: number, rho: number): Cx {
+    const iu: Cx = [-u[1], u[0]];
+    const b = sub([kappa, 0], sc(rho * xi, iu));
+    const d = csqrt(add(mul(b, b), sc(xi * xi, add(iu, mul(u, u)))));
+    const g = div(sub(b, d), add(b, d));
+    const e = cexp(sc(-T, d));
+    const one: Cx = [1, 0];
+    const C = sc((kappa * THETA) / (xi * xi), sub(sc(T, sub(b, d)), sc(2, clog(div(sub(one, mul(g, e)), sub(one, g))))));
+    const D = sc(1 / (xi * xi), div(mul(sub(b, d), sub(one, e)), sub(one, mul(g, e))));
+    return cexp(add(add(C, sc(V0, D)), mul(iu, [Math.log(S0), 0])));
+  }
+
+  function call(K: number, kappa: number, xi: number, rho: number): number {
+    const lk = Math.log(K), U = 150, M = 600, hh = U / M;
+    let p1 = 0, p2 = 0;
+    for (let j = 0; j <= M; j++) {
+      const u = Math.max(1e-6, j * hh);
+      const wgt = j === 0 || j === M ? 1 : j % 2 ? 4 : 2;
+      const phase = cexp([0, -u * lk]);
+      const denom: Cx = [0, u];
+      const f1 = div(mul(phase, cf([u, -1], kappa, xi, rho)), mul(denom, [S0, 0]));
+      const f2 = div(mul(phase, cf([u, 0], kappa, xi, rho)), denom);
+      p1 += wgt * f1[0];
+      p2 += wgt * f2[0];
+    }
+    p1 = 0.5 + (p1 * hh) / 3 / Math.PI;
+    p2 = 0.5 + (p2 * hh) / 3 / Math.PI;
+    return S0 * p1 - K * p2;
+  }
+
+  mount("data-heston", (root, env) => {
+    const canvas = root.querySelector("canvas")!;
+    const DAYS = 365;
+    let seed = 3;
+    let Z1 = normals(seed, DAYS), Z2 = normals(seed + 101, DAYS);
+
+    function draw() {
+      const C = env.C;
+      const rho = +$in(root, "rho").value, xi = +$in(root, "xi").value, kappa = +$in(root, "kappa").value;
+      const strikes: number[] = [];
+      for (let K = 65; K <= 140; K += 2.5) strikes.push(K);
+      const ivs = strikes.map((K) => impliedVol(call(K, kappa, xi, rho), S0, K, T, 0));
+      const iv = (K: number) => impliedVol(call(K, kappa, xi, rho), S0, K, T, 0);
+
+      const { ctx, w, h } = fit(canvas);
+      ctx.clearRect(0, 0, w, h);
+      const narrow = w < 560;
+      const b1 = narrow ? { x0: 48, x1: w - 12, y0: 22, y1: h * 0.5 - 18 } : { x0: 48, x1: w * 0.5 - 16, y0: 22, y1: h - 32 };
+      const b2 = narrow ? { x0: 48, x1: w - 12, y0: h * 0.5 + 22, y1: h - 32 } : { x0: w * 0.5 + 40, x1: w - 14, y0: 22, y1: h - 32 };
+      const good = ivs.filter((v) => isFinite(v));
+      const lo = Math.min(0.5, ...good) - 0.03, hi = Math.max(0.7, ...good) + 0.03;
+      const A = axes(ctx, C, b1, { lo: 65, hi: 140, ticks: [70, 80, 90, 100, 110, 120, 130, 140], label: "strike" },
+        { lo, hi, fmt: (v) => Math.round(v * 100) + "%", label: "implied volatility" });
+      line(ctx, [[A.X(65), A.Y(0.6)], [A.X(140), A.Y(0.6)]], C.muted, 1.2, [5, 4]);
+      label(ctx, "Black–Scholes", A.X(138), A.Y(0.6) - 9, C.muted, "right");
+      const pts = strikes.map((K, i) => [A.X(K), A.Y(ivs[i])] as [number, number]).filter((p) => isFinite(p[1]));
+      line(ctx, pts, C.accent, 2.2);
+      line(ctx, [[A.X(100), b1.y0], [A.X(100), b1.y1]], C.line, 1);
+
+      // one path: price (left axis, log) and volatility (right scale)
+      const dt = 1 / DAYS;
+      const lp = new Float64Array(DAYS + 1), vol = new Float64Array(DAYS + 1);
+      let x = 0, v = V0;
+      vol[0] = Math.sqrt(V0);
+      for (let k = 0; k < DAYS; k++) {
+        const vp = Math.max(v, 0);
+        const z2 = rho * Z1[k] + Math.sqrt(1 - rho * rho) * Z2[k];
+        x += -0.5 * vp * dt + Math.sqrt(vp * dt) * Z1[k];
+        v += kappa * (THETA - vp) * dt + xi * Math.sqrt(vp * dt) * z2;
+        lp[k + 1] = x;
+        vol[k + 1] = Math.sqrt(Math.max(v, 0));
+      }
+      let pl = 0, ph = 0, vh = 0;
+      for (let k = 0; k <= DAYS; k++) { pl = Math.min(pl, lp[k]); ph = Math.max(ph, lp[k]); vh = Math.max(vh, vol[k]); }
+      const mid = b2.y0 + (b2.y1 - b2.y0) * 0.55;
+      const B = axes(ctx, C, { ...b2, y1: mid - 10 }, { lo: 0, hi: DAYS, ticks: [] },
+        { lo: pl - 0.05, hi: ph + 0.05, ticks: [0.5, 0.75, 1, 1.5, 2, 3].map(Math.log).filter((t) => t > pl - 0.05 && t < ph + 0.05), fmt: (t) => String(Math.round(100 * Math.exp(t))), label: "price" });
+      const pp: [number, number][] = [];
+      for (let k = 0; k <= DAYS; k += 2) pp.push([B.X(k), B.Y(lp[k])]);
+      line(ctx, pp, C.fg, 1.3);
+      const V = axes(ctx, C, { ...b2, y0: mid + 14 }, { lo: 0, hi: DAYS, ticks: [0, 91, 182, 274, 365], fmt: (d) => ["0", "3 mo", "6 mo", "9 mo", "1 yr"][Math.round(d / 91.25)] },
+        { lo: 0, hi: Math.max(1, vh * 1.05), ticks: [0, 0.5, 1, 1.5].filter((t) => t <= Math.max(1, vh * 1.05)), fmt: (t) => Math.round(t * 100) + "%", label: "volatility √v" });
+      const vv: [number, number][] = [];
+      for (let k = 0; k <= DAYS; k += 2) vv.push([V.X(k), V.Y(vol[k])]);
+      line(ctx, vv, C.warm, 1.3);
+
+      const atm = iv(100);
+      $out(root, "rho").textContent = (rho > 0 ? "+" : "") + rho.toFixed(2);
+      $out(root, "xi").textContent = xi.toFixed(2);
+      $out(root, "kappa").textContent = kappa.toFixed(1);
+      $out(root, "atm").textContent = (atm * 100).toFixed(1) + "%";
+      const skew = iv(90) - iv(110);
+      $out(root, "skew").textContent = (skew >= 0 ? "+" : "") + (skew * 100).toFixed(1) + " pts";
+      const wing = (iv(70) + iv(130)) / 2 - atm;
+      $out(root, "wing").textContent = (wing >= 0 ? "+" : "") + (wing * 100).toFixed(1) + " pts";
+      const fel = (2 * kappa * THETA) / (xi * xi);
+      $out(root, "feller").innerHTML = `${fel.toFixed(2)} <small>${fel >= 1 ? "v stays positive" : "v can hit 0"}</small>`;
+    }
+
+    root.querySelector("[data-rerun]")!.addEventListener("click", () => {
+      seed = (seed * 48271) % 2147483647;
+      Z1 = normals(seed, DAYS);
+      Z2 = normals(seed + 101, DAYS);
+      draw();
+    });
+    return { draw };
+  });
+</script>

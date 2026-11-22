@@ -1,0 +1,85 @@
+---
+// Interactive Almgren–Chriss trajectory: inventory over time for a given urgency κT, and the cost–risk frontier.
+---
+
+<figure class="fig" data-exec aria-label="Interactive optimal execution">
+  <div class="fig-head">
+    <strong>Try it: how fast to sell</strong>
+  </div>
+  <div class="controls">
+    <div class="ctrl">
+      <label><span>Urgency κT</span><span data-out="k"></span></label>
+      <input type="range" data-in="k" min="0" max="6" step="0.05" value="2" aria-label="Urgency kappa times T" />
+    </div>
+  </div>
+  <div class="readouts">
+    <div><span class="label">Expected cost</span><span class="v" data-out="cost">–</span></div>
+    <div><span class="label">Risk (std. dev.)</span><span class="v" data-out="risk">–</span></div>
+    <div><span class="label">Left at half time</span><span class="v hot" data-out="half">–</span></div>
+    <div><span class="label">Opening speed</span><span class="v" data-out="speed">–</span></div>
+  </div>
+  <div class="plot short"><canvas role="img" aria-label="Inventory over time and the cost–risk frontier"></canvas></div>
+  <figcaption class="fig-foot">κ² = λσ²/η: risk aversion × variance over temporary impact. κT = 0 is a constant-rate sale (TWAP). Costs and risks are relative to TWAP.</figcaption>
+</figure>
+
+<script>
+  import { $in, $out, axes, fit, label, line, mount } from "../scripts/figure";
+
+  /** Expected impact cost and variance relative to TWAP for urgency k = κT. */
+  function ratios(k: number): { cost: number; varr: number } {
+    if (k < 1e-4) return { cost: 1, varr: 1 };
+    const s2 = Math.sinh(k) ** 2, q = Math.sinh(2 * k) / (4 * k);
+    return { cost: ((k * k) / s2) * (0.5 + q), varr: (3 / s2) * (q - 0.5) };
+  }
+  const inventory = (k: number, t: number) => (k < 1e-4 ? 1 - t : Math.sinh(k * (1 - t)) / Math.sinh(k));
+
+  mount("data-exec", (root, env) => {
+    const canvas = root.querySelector("canvas")!;
+    function draw() {
+      const C = env.C;
+      const k = +$in(root, "k").value;
+      const { ctx, w, h } = fit(canvas);
+      ctx.clearRect(0, 0, w, h);
+      const narrow = w < 560;
+      const b1 = narrow ? { x0: 48, x1: w - 12, y0: 22, y1: h * 0.48 - 18 } : { x0: 48, x1: w * 0.52 - 16, y0: 22, y1: h - 32 };
+      const b2 = narrow ? { x0: 48, x1: w - 12, y0: h * 0.48 + 22, y1: h - 32 } : { x0: w * 0.52 + 40, x1: w - 14, y0: 22, y1: h - 32 };
+
+      const A = axes(ctx, C, b1, { lo: 0, hi: 1, ticks: [0, 0.25, 0.5, 0.75, 1], fmt: (v) => (v === 0 ? "0" : v === 1 ? "T" : v + "T"), label: "time" },
+        { lo: 0, hi: 1, ticks: [0, 0.25, 0.5, 0.75, 1], fmt: (v) => Math.round(v * 100) + "%", label: "inventory left" });
+      for (const kk of [1, 3, 5]) {
+        const pts: [number, number][] = [];
+        for (let i = 0; i <= 80; i++) pts.push([A.X(i / 80), A.Y(inventory(kk, i / 80))]);
+        line(ctx, pts, C.line, 1);
+      }
+      line(ctx, [[A.X(0), A.Y(1)], [A.X(1), A.Y(0)]], C.muted, 1.2, [5, 4]);
+      label(ctx, "TWAP", A.X(0.62), A.Y(0.38) - 10, C.muted);
+      const pts: [number, number][] = [];
+      for (let i = 0; i <= 120; i++) pts.push([A.X(i / 120), A.Y(inventory(k, i / 120))]);
+      line(ctx, pts, C.accent, 2.2);
+
+      // frontier: x = cost ratio, y = risk ratio
+      const fr: [number, number][] = [];
+      for (let i = 0; i <= 160; i++) {
+        const kk = (i / 160) * 6;
+        const r = ratios(kk);
+        fr.push([r.cost, Math.sqrt(r.varr)]);
+      }
+      const xmax = Math.max(...fr.map((p) => p[0])) * 1.05;
+      const B = axes(ctx, C, b2, { lo: 1, hi: xmax, label: "expected cost (× TWAP)" }, { lo: 0.3, hi: 1.05, ticks: [0.4, 0.6, 0.8, 1], fmt: (v) => v.toFixed(1), label: "risk (× TWAP)" });
+      line(ctx, fr.map(([x, y]) => [B.X(x), B.Y(y)] as [number, number]), C.fg, 1.5);
+      const r = ratios(k);
+      ctx.fillStyle = C.warm;
+      ctx.beginPath();
+      ctx.arc(B.X(r.cost), B.Y(Math.sqrt(r.varr)), 5, 0, Math.PI * 2);
+      ctx.fill();
+      label(ctx, "TWAP", B.X(1) + 8, B.Y(1), C.muted);
+
+      $out(root, "k").textContent = k.toFixed(2);
+      $out(root, "cost").textContent = "×" + r.cost.toFixed(2);
+      $out(root, "risk").textContent = "×" + Math.sqrt(r.varr).toFixed(2);
+      $out(root, "half").textContent = Math.round(inventory(k, 0.5) * 100) + "%";
+      $out(root, "speed").textContent = "×" + (k < 1e-4 ? 1 : (k * Math.cosh(k)) / Math.sinh(k)).toFixed(2);
+    }
+    return { draw };
+  });
+</script>
